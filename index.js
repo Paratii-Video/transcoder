@@ -30,7 +30,10 @@ const conversions = {
 var ipfs = ipfsAPI(config.IPFS_API)
 ffmpeg.setFfprobePath(config.FFPROBE_PATH)
 
-let testHash = '/ipfs/QmR6QvFUBhHQ288VmpHQboqzLmDrrC2fcTUyT4hSMCwFyj'
+// let testHash = '/ipfs/QmR6QvFUBhHQ288VmpHQboqzLmDrrC2fcTUyT4hSMCwFyj'
+// let testHash = '/ipfs/QmaLDCUrJqjHgnv8trt8KcSuFavQaorZpMtSDogE6np8st'
+let testHash = '/ipfs/QmeG4popSYeipnvuvP6u4UxuRfKWTzy6eEMyC54ArFRNiG'
+
 // let testHash = '/ipfs/QmZgNs5jJJtv1yD83aCoQvRUYscfneSZeYQyLpjKrfyRFK'
 
 function getResolutionPath (filePath, cb) {
@@ -237,7 +240,6 @@ function convertAndAdd (ipfsHash, size, cb) {
       if (err) return cb(err)
       let command = ffmpeg(stream)
         .inputOptions('-strict -2')
-        // .inputOptions('preset', 'superfast')
         .addOption('-profile:v', 'baseline')
         .addOption('-level', 3.0)
         .addOption('-start_number', 0)
@@ -260,6 +262,9 @@ function convertAndAdd (ipfsHash, size, cb) {
         //   // percentage is not available when using an input stream
         //   console.log('Processing: ', progress.percentage, ' % done')
         // })
+        .on('stderr', (err) => {
+          if (err) console.error('stderr: ', err)
+        })
         .on('end', () => {
           console.log('finished processing file.')
           addDirToIPFS(folder, cb)
