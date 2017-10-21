@@ -6,6 +6,7 @@
 
 const { EventEmitter } = require('events')
 const Ipfs = require('ipfs')
+const HttpAPI = require('ipfs/src/http/index.js')
 const ParatiiProtocol = require('paratii-protocol')
 const log = require('debug')('paratii:ipfs')
 log.error = require('debug')('paratii:ipfs:error')
@@ -32,6 +33,11 @@ class PIPFS extends EventEmitter {
           console.log('[paratii-protocol] ', peerId.toB58String(), ' new Msg: ', msg)
         })
 
+        this.protocol.notifications.on('command:transcode', (peerId, command) => {
+          log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
+          this.emit('transcode', peerId, command)
+        })
+
         this.protocol.start(() => {
           log('paratii-protocol is live.')
           this.emit('ready')
@@ -45,7 +51,20 @@ class PIPFS extends EventEmitter {
     })
   }
 
-  start (cb) {
+  startAPI (cb) {
+    this.httpAPI = new HttpAPI(this.ipfs, null, null)
+
+    this.httpAPI.start((err) => {
+      if (err && err.code === 'ENOENT' && err.message.match(/Uninitalized repo/i)) {
+        log('Error: no initialized ipfs repo found in ' + this.node.repo.path())
+        log('please run: jsipfs init')
+      }
+      if (err) {
+        throw err
+      }
+      log('Daemon is ready')
+      cb()
+    })
   }
 }
 

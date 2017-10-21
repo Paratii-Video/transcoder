@@ -74,6 +74,11 @@ function startTranscodingJob (job, cb) {
     if (err) throw err
 
     log('Transcoding Job ', job.hash, ' done')
+    let msg = pipfs.protocol.createCommand('transcoding:done', {hash: job.hash, author: job.peerId, result: JSON.stringify(res)})
+    pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
+      if (err) throw err
+      log('paratii protocol msg sent: ', job.hash)
+    })
     cb(null, res)
   })
 }
@@ -86,8 +91,21 @@ var qTranscoder = queue(startTranscodingJob, 1)
 qTranscoder.drain = allDone
 
 pipfs.on('ready', () => {
-  qTranscoder.push({
-    ipfs: pipfs.ipfs,
-    hash: testHash
+  // qTranscoder.push({
+  //   ipfs: pipfs.ipfs,
+  //   hash: testHash
+  // })
+
+  pipfs.startAPI(() => {
+
+  })
+  pipfs.on('transcode', (peerId, command) => {
+    log('full loop ', command.payload.toString(), '\n', command.args.toString())
+    let args = JSON.parse(command.args.toString())
+    qTranscoder.push({
+      peerId: peerId,
+      ipfs: pipfs.ipfs,
+      hash: args.hash
+    })
   })
 })
