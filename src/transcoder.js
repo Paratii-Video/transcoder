@@ -8,9 +8,11 @@ const tar = require('tar-stream')
 const pull = require('pull-stream')
 const toStream = require('pull-stream-to-stream')
 const log = require('debug')('paratii:transcoder')
-const { eachSeries, nextTick } = require('async')
+const { mapLimit, eachSeries, nextTick } = require('async')
 const ipfsAPI = require('ipfs-api')
 const ffmpeg = require('fluent-ffmpeg')
+const { forEach } = require('lodash')
+const once = require('once')
 
 const config = {
   FFMPEG_PATH: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
@@ -25,6 +27,28 @@ const conversions = {
   '360': ['?x360', '?x240', '?x144'],
   '240': ['?x240', '?x144'],
   '144': ['?x144']
+}
+
+// { '?x360':
+  //  { path: 'tmp/paratii-9SVMCY',
+  //    hash: 'QmXUPZZhDLnrPaTR7eLPVFMDgHZBNhEAX6yzULe6F4cBdV',
+  //    size: 6410521 },
+  // '?x240':
+  //  { path: 'tmp/paratii-q86Byh',
+  //    hash: 'QmSEohbTwgifvjgWwQQbufANXpQHDVEdQjaTUovYsWbUSA',
+  //    size: 4584168 },
+  // '?x144':
+  //  { path: 'tmp/paratii-vli2p4',
+  //    hash: 'Qmf8qPTrp6ZzBFCdyWp2odLcCppptce6HDkDKpfXLwUCTK',
+  //    size: 2537626 } }
+
+const MAX_BIT_RATE = {
+  '1080': '3500000',
+  '720': '1700000',
+  '480': '1560000',
+  '360': '1280000',
+  '240': '1000000',
+  '144': '640000'
 }
 
 // var ipfs = ipfsAPI(config.IPFS_API)
@@ -48,6 +72,30 @@ class Transcoder extends EventEmitter {
     this.result = {}
   }
 
+  getHeight (size) {
+    let res = this.codecData.video_details[3].split('x')
+    let height = parseInt(res[0])
+    let width = parseInt(res[1])
+
+    let s = parseInt(size.split('x')[1])
+
+    return String(Math.floor((height * s) / width) + 'x' + s)
+  }
+
+  getBitrate (size) {
+    // https://support.google.com/youtube/answer/1722171?hl=en-GB
+    // https://developer.apple.com/library/content/technotes/tn2224/_index.html#//apple_ref/doc/uid/DTS40009745-CH1-VARIANTPLAYLISTS
+    let originBitrate = this.resolution.bitrate
+    let height = this.resolution.height
+
+    let s = parseInt(size.split('x')[1])
+    // if (height === s || s >= 720) {
+    //   return String(originBitrate)
+    // } else {
+    // }
+    return MAX_BIT_RATE[String(s)]
+  }
+
   getResolution (cb) {
     // this.getFileStream(this.sourcePath, (err, filesStream) => {
     this.ipfs.files.get(this.sourcePath, (err, filesStream) => {
@@ -67,22 +115,24 @@ class Transcoder extends EventEmitter {
           ffmpeg(file.content.resume())
             .ffprobe(0, (err, metadata) => {
               if (err) throw err
-
-              // console.log(metadata)
+              // Ref: metadata object example https://github.com/fluent-ffmpeg/node-fluent-ffmpeg#reading-video-metadata
+              console.log(metadata)
               for (var stream of metadata.streams) {
                 if (stream.codec_type === 'video') {
                   this.resolution = {
                     width: stream.width,
                     height: stream.height,
                     display_aspect_ratio: stream.display_aspect_ratio,
-                    availableSizes: conversions[String(stream.height)]
+                    availableSizes: conversions[String(stream.height)],
+                    bitrate: stream.bit_rate
                   }
 
                   return cb(null, {
                     width: stream.width,
                     height: stream.height,
                     display_aspect_ratio: stream.display_aspect_ratio,
-                    availableSizes: conversions[String(stream.height)]
+                    availableSizes: conversions[String(stream.height)],
+                    bitrate: stream.bit_rate
                   })
                 }
               }
@@ -101,17 +151,47 @@ class Transcoder extends EventEmitter {
   }
 
   convertTo (sizes, cb) {
-    eachSeries(sizes, (size, next) => {
-      this.convertAndAdd(this.sourcePath, size, (err, convertedHash) => {
-        if (err) return next(err)
-        console.log(`Converted ${size} : ${convertedHash}`)
-        this.result[size] = convertedHash
-        next()
-      })
-    }, (err) => {
-      if (err) throw err
+    this.convertAndAdd(this.sourcePath, sizes, (err, convertedHash) => {
+      if (err) return cb(err)
+      console.log(`Converted ${sizes.join(',')} : ${JSON.stringify(this.result)}`)
+      // this.result[size] = convertedHash
+      // cb(null, convertedHash)
       cb(null, this.result)
     })
+
+    // eachSeries(sizes, (size, next) => {
+    //   this.convertAndAdd(this.sourcePath, size, (err, convertedHash) => {
+    //     if (err) return next(err)
+    //     console.log(`Converted ${size} : ${JSON.stringify(convertedHash)}`)
+    //     this.result[size] = convertedHash
+    //     next()
+    //   })
+    // }, (err) => {
+    //   if (err) throw err
+    //   cb(null, this.result)
+    // })
+  }
+
+  createMasterPlaylist (formats, cb) {
+    let master = '#EXTM3U\n'
+    master += '#EXT-X-VERSION:6\n'
+
+    let resolutionLine = (size) => {
+      return `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${this.getBitrate(size)},CODECS="avc1.4d001f,mp4a.40.2",RESOLUTION=${this.getHeight(size)}\n`
+    }
+    let result = master
+    log('availableSizes: ', formats.resolution.availableSizes)
+    forEach(formats.resolution.availableSizes, (size) => {
+      // log(`format: ${JSON.stringify(formats[size])} , size: ${size}`)
+      result += resolutionLine(size)
+      result += String(size.split('x')[1]) + '.m3u8\n'
+      // if (formats[size]) {
+      // } else {
+      //   log(`CANNOT find format ${size}, ${JSON.stringify(formats)}`)
+      // }
+    })
+
+    cb(null, result)
   }
 
   start (cb) {
@@ -119,12 +199,19 @@ class Transcoder extends EventEmitter {
     this.getResolution((err, res) => {
       if (err) throw err
       this.resolution = res
+      this.result = this.result || {}
+      this.result.resolution = res
       console.log(`Original Resolution: ${res.height}p , availableSizes: ${res.availableSizes.join(',')}`)
       this.convertTo(res.availableSizes, (err, result) => {
         if (err) throw err
         console.log(`Transcoder Finished ${this.sourcePath}`)
-        console.log(result)
-        cb(null, result)
+        result.originPath = this.sourcePath
+        result.resolution = this.resolution
+        console.log('Result: ', result)
+        // this.createMasterPlaylist(result, (err, masterPlaylist) => {
+        //   if (err) throw err
+        //
+        // })
       })
     })
   }
@@ -191,10 +278,12 @@ class Transcoder extends EventEmitter {
   }
 
   addDirToIPFS (dirPath, cb) {
+    cb = once(cb)
     let resp = null
     this.ipfs.files.createAddStream((err, addStream) => {
       if (err) return cb(err)
       addStream.on('data', (file) => {
+        console.log('dirPath ', dirPath)
         console.log('file Added ', file)
         if ('/' + file.path === dirPath) {
           console.log('this is the hash to return ')
@@ -211,22 +300,30 @@ class Transcoder extends EventEmitter {
       fs.readdir(dirPath, (err, files) => {
         if (err) return cb(err)
         eachSeries(files, (file, next) => {
-          let rStream = fs.createReadStream(path.join(dirPath, file))
-          console.log('reading file ', file)
+          next = once(next)
           try {
-            addStream.write({
-              path: path.join(dirPath, file),
-              content: rStream
+            console.log('reading file ', file)
+            let rStream = fs.createReadStream(path.join(dirPath, file))
+            rStream.on('error', (err) => {
+              if (err) {
+                log('rStream Error ', err)
+                return next()
+              }
             })
+            if (rStream) {
+              addStream.write({
+                path: path.join(dirPath, file),
+                content: rStream
+              })
+            }
           } catch (e) {
             if (e) {
               console.log('gotcha ', e)
             }
           } finally {
-
           }
-          nextTick(() => next())
           // next()
+          nextTick(() => next())
         }, (err) => {
           if (err) return cb(err)
           // addStream.destroy()
@@ -236,7 +333,8 @@ class Transcoder extends EventEmitter {
     })
   }
 
-  convertAndAdd (ipfsHash, size, cb) {
+  convertAndAdd (ipfsHash, sizes, cb) {
+    // TODO use ffmpeg command cloning https://github.com/fluent-ffmpeg/node-fluent-ffmpeg#cloning-an-ffmpegcommand
     // this.getFileStream(ipfsHash, (err, stream) => {
     this.ipfs.files.get(ipfsHash, (err, filesStream) => {
       if (err) return cb(err)
@@ -250,9 +348,8 @@ class Transcoder extends EventEmitter {
               .addOption('-level', 3.0)
               .addOption('-start_number', 0)
               .videoCodec('libx264')
-              .size(size)
               // set audio bitrate
-              .audioBitrate('128k')
+              .audioBitrate('64k')
               // set audio codec
               .audioCodec('aac')
               // set number of audio channels
@@ -262,29 +359,86 @@ class Transcoder extends EventEmitter {
               // include all the segments in the list
               .addOption('-hls_list_size', 0)
               .addOption('-f', 'hls')
-              // .inputOptions('-strict -2 -profile:v baseline -level 3.0 -start_number 0 -hls_time 5 -hls_list_size 0 -f hls')
-              // .output(fileStream)
-              // .on('progress', (progress) => {
-              //   // percentage is not available when using an input stream
-              //   console.log('Processing: ', progress.percentage, ' % done')
+              .on('codecData', (data) => {
+                log('data: ', data)
+                this.codecData = data
+                console.log('Input is ' + data.audio + ' audio ' +
+                  'with ' + data.video + ' video')
+              })
+              // .on('stderr', (out) => {
+              //   log('stderr: ', out)
               // })
-              .on('stderr', (out) => {
-                log('stderr: ', out)
+              // .on('end', () => {
+              //   console.log('finished processing file.')
+              //   this.addDirToIPFS(folder, cb)
+              //   // return cb()
+              // })
+              // .on('error', (err) => {
+              //   console.log('an error happened: ', err)
+              //   return cb(err)
+              // })
+              // .on('progress', function (progress) {
+              //   console.log('Processing: ', progress)
+              // })
+            this.path2size = {}
+            let saveLog = {}
+            console.log('sizes : ', sizes)
+            mapLimit(sizes, sizes.length, (size, next) => {
+              next = once(next)
+              // fs.mkdtemp(path.join(folder, 'p-'), (err, secondFolder) => {
+              //   if (err) throw err
+              //
+              //   this.path2size[secondFolder] = size
+              // })
+              log(`launching ${size} converter, storing as ${folder}/${size.split('x')[1]}`)
+              command.clone()
+              .size(size)
+              .on('codecData', (data) => {
+                log('data: ', data)
+                this.codecData = data
+                console.log('Input is ' + data.audio + ' audio ' +
+                'with ' + data.video + ' video')
               })
               .on('end', () => {
-                console.log('finished processing file.')
-                this.addDirToIPFS(folder, cb)
+                // console.log('finished processing file.', this.path2size, ' ', secondFolder)
+                // if (saveLog[secondFolder]) {
+                //   log('saveToIPFS already called ', secondFolder)
+                // } else {
+                //   saveLog[secondFolder] = true
+                //   this.addDirToIPFS(secondFolder, next)
+                // }
+                next(null)
                 // return cb()
               })
               .on('error', (err) => {
                 console.log('an error happened: ', err)
-                return cb(err)
+                return next(err)
               })
-              .on('progress', function (progress) {
-                console.log('Processing: ', progress)
+              .on('progress', (progress) => {
+                log('Processing: ', progress.timemark)
               })
-              .output(folder + '/master.m3u8')
+              .save(folder + '/' + String(size.split('x')[1]) + '.m3u8')
               .run()
+            }, (err, results) => {
+              if (err) throw err
+              this.result['root'] = folder
+              log('result after mapLimit ', this.result)
+              this.createMasterPlaylist(this.result, (err, masterPlaylist) => {
+                if (err) throw err
+                console.log('masterPlaylist: ', masterPlaylist)
+                fs.writeFile(this.result.root + '/master.m3u8', masterPlaylist, (err, done) => {
+                  if (err) throw err
+                  this.addDirToIPFS(this.result.root, (err, resp) => {
+                    if (err) throw err
+                    log('Master Playlist is added to IPFS ', resp)
+                    this.result.master = resp
+                    cb(null, this.result)
+                  })
+                })
+              })
+              // cb(null, this.result)
+            })
+
           })
         }
       })
