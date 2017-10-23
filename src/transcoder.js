@@ -205,9 +205,10 @@ class Transcoder extends EventEmitter {
       this.convertTo(res.availableSizes, (err, result) => {
         if (err) throw err
         console.log(`Transcoder Finished ${this.sourcePath}`)
-        result.originPath = this.sourcePath
-        result.resolution = this.resolution
+        this.result.originPath = this.sourcePath
+        this.result.resolution = this.resolution
         console.log('Result: ', result)
+        cb(null, this.result)
         // this.createMasterPlaylist(result, (err, masterPlaylist) => {
         //   if (err) throw err
         //
