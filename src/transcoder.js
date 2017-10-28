@@ -43,12 +43,12 @@ const conversions = {
   //    size: 2537626 } }
 
 const MAX_BIT_RATE = {
-  '1080': '3500000',
-  '720': '1700000',
-  '480': '1560000',
-  '360': '1280000',
-  '240': '1000000',
-  '144': '640000'
+  '1080': '350000',
+  '720': '170000',
+  '480': '156000',
+  '360': '128000',
+  '240': '100000',
+  '144': '64000'
 }
 
 // var ipfs = ipfsAPI(config.IPFS_API)
@@ -215,6 +215,23 @@ class Transcoder extends EventEmitter {
         // })
       })
     })
+  }
+
+  generateScreenshots (inputPath, outputFolder, callback) {
+    let outputedFileNames = null
+    ffmpeg(inputPath)
+      .on('filenames', (filenames) => {
+        console.log('Will generate ' + filenames)
+        outputedFileNames = filenames
+      })
+      .on('end', () => {
+        callback(null, outputedFileNames)
+      })
+      .screenshots({
+        count: 4,
+        folder: outputFolder,
+        filename: 'thumbnail-%r.png'
+      })
   }
 
   getFileStream (ipfsHash, callback) {
@@ -429,11 +446,16 @@ class Transcoder extends EventEmitter {
                 console.log('masterPlaylist: ', masterPlaylist)
                 fs.writeFile(this.result.root + '/master.m3u8', masterPlaylist, (err, done) => {
                   if (err) throw err
-                  this.addDirToIPFS(this.result.root, (err, resp) => {
+                  this.generateScreenshots(this.result.root + '/master.m3u8', folder, (err, screenshots) => {
                     if (err) throw err
-                    log('Master Playlist is added to IPFS ', resp)
-                    this.result.master = resp
-                    cb(null, this.result)
+                    this.result.screenshots = screenshots
+                    this.addDirToIPFS(this.result.root, (err, resp) => {
+                      if (err) throw err
+                      log('Master Playlist is added to IPFS ', resp)
+                      this.result.master = resp
+                      cb(null, this.result)
+                    })
+
                   })
                 })
               })
