@@ -8,6 +8,9 @@ const { EventEmitter } = require('events')
 const Ipfs = require('ipfs')
 const HttpAPI = require('ipfs/src/http/index.js')
 const ParatiiProtocol = require('paratii-protocol')
+const pull = require('pull-stream')
+const pullFile = require('pull-file')
+
 const log = require('debug')('paratii:ipfs')
 log.error = require('debug')('paratii:ipfs:error')
 
@@ -65,6 +68,47 @@ class PIPFS extends EventEmitter {
       log('Daemon is ready')
       cb()
     })
+  }
+
+  upload (files, callback) {
+    let hashes = []
+    pull(
+      pull.values(files),
+      // pull.through((file) => {
+      //   console.log('Adding ', file)
+      //   fileSize = file.size
+      //   total = 0
+      // }),
+      pull.asyncMap((file, cb) => pull(
+        pull.values([{
+          path: file,
+          // content: pullFilereader(file)
+          content: pull(
+            pullFile(file)
+            // pull.through((chunk) => updateProgress(chunk.length))
+          )
+        }]),
+        this.ipfs.files.createAddPullStream({chunkerOptions: {maxChunkSize: 64048}}), // default size 262144
+        pull.collect((err, res) => {
+          if (err) {
+            return cb(err)
+          }
+          const file = res[0]
+          log('Adding %s finished as %s', file.path, file.hash)
+          hashes.push(file)
+
+          cb(null, file)
+        }))),
+      pull.collect((err, files) => {
+        if (err) {
+          throw err
+        }
+        log('uploaded To IPFS ', files)
+        callback(null, hashes)
+        // if (files && files.length) {
+        // }
+      })
+    )
   }
 }
 

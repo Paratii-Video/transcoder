@@ -1,9 +1,10 @@
 'use strict'
 
-
+const path = require('path')
 const { queue } = require('async')
 const Transcoder = require('./transcoder')
 const PIPFS = require('./pipfs')
+const downloader = require('./downloader')
 
 const log = require('debug')('paratii:transcoder')
 log.error = require('debug')('paratii:transcoder:error')
@@ -108,4 +109,22 @@ pipfs.on('ready', () => {
       hash: args.hash
     })
   })
+
+  // Youtube Download Test 
+  // const url = 'https://www.youtube.com/watch?v=fULtYTDgZgA'
+  // const output = path.resolve(__dirname, '../video.mp4')
+  // downloader.download(url, output, (err, out) => {
+  //   if (err) throw err
+  //
+  //   log('downloader called back , uploading to IPFS')
+  //   pipfs.upload([out], (err, resp) => {
+  //     if (err) throw err
+  //     log('upload finished ', resp)
+  //     qTranscoder.push({
+  //       peerId: pipfs.ipfs.id,
+  //       ipfs: pipfs.ipfs,
+  //       hash: resp[0].hash
+  //     })
+  //   })
+  // })
 })
