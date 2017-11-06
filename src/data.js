@@ -15,6 +15,24 @@ class Data {
   getVideo (vId, callback) {
     this.db.get(vId, callback)
   }
+
+  dumpDb (callback) {
+    this.db.createReadStream()
+      .on('data', (data) => {
+        console.log(data.key.toString(), '\n')
+      })
+      .on('error', (err) => {
+        console.log('Oh my!', err)
+        callback(err)
+      })
+      .on('close', () => {
+        console.log('Stream closed')
+      })
+      .on('end', () => {
+        console.log('Stream ended')
+        callback()
+      })
+  }
 }
 
 module.exports = Data
