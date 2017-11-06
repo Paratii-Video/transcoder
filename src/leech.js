@@ -1,16 +1,19 @@
 'use strict'
 const os = require('os')
 const path = require('path')
-const { queue } = require('async')
+const fs = require('fs')
+const { queue, eachSeries } = require('async')
 const Transcoder = require('./transcoder')
 const PIPFS = require('./pipfs')
 const downloader = require('./downloader')
+const Data = require('./data')
 
 const log = require('debug')('paratii:transcoder')
 log.error = require('debug')('paratii:transcoder:error')
 
 let testHash = '/ipfs/QmR6QvFUBhHQ288VmpHQboqzLmDrrC2fcTUyT4hSMCwFyj'
 // const testHash = '/ipfs/QmeG4popSYeipnvuvP6u4UxuRfKWTzy6eEMyC54ArFRNiG'
+var data = new Data({})
 
 var pipfs = new PIPFS({
   bitswap: {
@@ -36,7 +39,6 @@ var pipfs = new PIPFS({
       }
     },
     'Bootstrap': [
-      '/dns4/bootstrap.paratii.video/tcp/443/wss/ipfs/QmeUmy6UtuEs91TH6bKnfuU1Yvp63CkZJWm624MjBEBazW',
       '/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ',
       '/ip4/104.236.179.241/tcp/4001/ipfs/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM',
       '/ip4/162.243.248.213/tcp/4001/ipfs/QmSoLueR4xBeUbY9WZ9xGUUxunbKWcrNFTDAadQJmocnWm',
@@ -76,12 +78,16 @@ function startTranscodingJob (job, cb) {
     if (err) throw err
 
     log('Transcoding Job ', job.hash, ' done')
-    let msg = pipfs.protocol.createCommand('transcoding:done', {hash: job.hash, author: job.peerId, result: JSON.stringify(res)})
-    pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
-      if (err) throw err
-      log('paratii protocol msg sent: ', job.hash)
+    // add info + master hash
+    data.addVideo(job.sourceUrl, {result: res, info: job.info}, (err) => {
+      if (err) {
+        throw err
+      }
+
+      cb(null, res)
     })
-    cb(null, res)
+
+    // cb(null, res)
   })
 }
 
@@ -162,6 +168,41 @@ pipfs.on('ready', () => {
   //     })
   //   }
   // })
+
+  fs.readFile('./vids.json', (err, vids) => {
+    if (err) throw err
+
+    try {
+      vids = JSON.parse(vids)
+    } catch (e) {
+      if (e) throw e
+    }
+
+    eachSeries(vids.youtube, (record, callback) => {
+      downloader.yt.getInfo(record.url, (err, info) => {
+        if (err) throw err
+        downloader.download(
+          record.url,
+          path.join(os.tmpdir(), 'yt_' + record.name.replace('/ /g', '_') + '.mp4'),
+          (err, output) => {
+            if (err) throw err
+            pipfs.upload([output], (err, resp) => {
+              if (err) throw err
+              qTranscoder.push({
+                peerId: pipfs.id,
+                ipfs: pipfs.ipfs,
+                hash: resp[0].hash,
+                info: info, // adding info for later parsing
+                sourceUrl: record.url
+              })
+
+              callback()
+            })
+          })
+      })
+    })
+
+  })
 
   // const vidl = require('vimeo-downloader')
   // const url = 'https://vimeo.com/129522659'

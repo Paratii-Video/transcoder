@@ -25,6 +25,7 @@ class PIPFS extends EventEmitter {
       log('up and running ... repo:', this.ipfs.repo.path())
       log('Hooking up paratii-protocol')
       this.ipfs.id().then((id) => {
+        this.id = id
         this.protocol = new ParatiiProtocol(
           this.ipfs._libp2pNode,
           this.ipfs._repo.blocks,

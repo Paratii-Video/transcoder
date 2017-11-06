@@ -1,0 +1,231 @@
+{
+  "noUrl": [
+    {
+      "A": "twit",
+      "B": "fb",
+      "C": "Playlist: Intro to the Blockchain"
+    },
+    {
+      "C": "Playlist: Cryptoeconomy & Events"
+    },
+    {
+      "C": "Playlist: Brainy movies & music for the weekend"
+    },
+    {
+      "C": "Playlist: Cool projects out there"
+    },
+    {
+      "C": "Playlist: Around the Block"
+    }
+  ],
+  "ted": [
+    {
+      "name": "How the blockchain will radically transform the economy - Bettina Warburg",
+      "url": "https://www.ted.com/talks/bettina_warburg_how_the_blockchain_will_radically_transform_the_economy"
+    },
+    {
+      "name": "We've stopped trusting institutions and started trusting strangers",
+      "url": "https://www.ted.com/talks/rachel_botsman_we_ve_stopped_trusting_institutions_and_started_trusting_strangers"
+    },
+    {
+      "name": "Could your language affect your ability to save money?",
+      "url": "https://www.ted.com/talks/keith_chen_could_your_language_affect_your_ability_to_save_money"
+    },
+    {
+      "name": "Poverty isn't a lack of character; it's a lack of cash",
+      "url": "https://www.ted.com/talks/rutger_bregman_poverty_isn_t_a_lack_of_character_it_s_a_lack_of_cash"
+    },
+    {
+      "name": "How the blockchain is changing money and business",
+      "url": "https://www.ted.com/talks/don_tapscott_how_the_blockchain_is_changing_money_and_business"
+    },
+    {
+      "name": "How we'll earn money in a future without jobs",
+      "url": "https://www.ted.com/talks/martin_ford_how_we_ll_earn_money_in_a_future_without_jobs"
+    }
+  ],
+  "youtube": [
+    {
+      "name": "The mathematician who cracked Wall Street | Jim Simons",
+      "url": "https://www.youtube.com/watch?v=U5kIdtMJGc8"
+    },
+    {
+      "name": "CESC2017 - Balaji Srinivasan - Quantifying Decentralization",
+      "url": "https://www.youtube.com/watch?v=2GwN3vc_9ic"
+    },
+    {
+      "name": "CESC2017 - Shin’ichiro Matsuo - Global Scale Research Networks and Cryptoeconomics",
+      "url": "https://www.youtube.com/watch?v=G9Bp56y3X8U"
+    },
+    {
+      "name": "CESC2017 - Vlad Zamfir - Cryptoeconomics in Casper",
+      "url": "https://www.youtube.com/watch?v=5ScY7ruD_eg"
+    },
+    {
+      "name": "CESC2017 - Eleftherios Kokoris-Kogias - Scalable and Efficient Distributed Ledgers",
+      "url": "https://www.youtube.com/watch?v=yZCe_ra2a8w"
+    },
+    {
+      "name": "CESC2017 - Karl Floersch - Casper Proof of Stake",
+      "url": "https://www.youtube.com/watch?v=ycF0WFHY5kc"
+    },
+    {
+      "name": "CESC2017 - Neil Gandal - Price Manipulation in the Bitcoin Ecosystem",
+      "url": "https://www.youtube.com/watch?v=k7rgse0gISI"
+    },
+    {
+      "name": "CESC2017 - Ren Zhang - Analyzing the Bitcoin Unlimited Mining Protocol",
+      "url": "https://www.youtube.com/watch?v=P35M74KcLmA"
+    },
+    {
+      "name": "CESC2017 - Dmitry Meshkov - On Space-Scare Economy",
+      "url": "https://www.youtube.com/watch?v=gBy-pu1kzdQ"
+    },
+    {
+      "name": "CESC2017 - Ryan Zurrer - Keepers",
+      "url": "https://www.youtube.com/watch?v=2u60czobhBo"
+    },
+    {
+      "name": "CESC2017 - Ratul Saha - Power Splitting Games in Distributed Computation",
+      "url": "https://www.youtube.com/watch?v=Ymg_sq9j_To"
+    },
+    {
+      "name": "CESC2017 - Sinclair Davidson - What is a Token?",
+      "url": "https://www.youtube.com/watch?v=sIp11sadEyU"
+    },
+    {
+      "name": "CESC2017 - Rafael Pass - Thunderella",
+      "url": "https://www.youtube.com/watch?v=DY2qhydRK_0"
+    },
+    {
+      "name": "CESC2017 - Silvio Micali - ALGORAND",
+      "url": "https://www.youtube.com/watch?v=NbnZi9SImYY"
+    },
+    {
+      "name": "CESC2017 - Jordan Earls - Economics of Fees and Gas",
+      "url": "https://www.youtube.com/watch?v=8Y_RgEIJisA"
+    },
+    {
+      "name": "Devcon2: Ethereum in 25 Minutes",
+      "url": "https://www.youtube.com/watch?v=66SaEDzlmP4"
+    },
+    {
+      "name": "DEVCON1: Ethereum for Dummies - Dr. Gavin Wood",
+      "url": "https://www.youtube.com/watch?v=U_LK0t_qaPo"
+    },
+    {
+      "name": "Integrating Ethereum Into Our Daily Lives - Jarrad Hope",
+      "url": "https://www.youtube.com/watch?v=ZXZOdLuIAiE"
+    },
+    {
+      "name": "A Deep Dive into the Colony Foundation Protocol - Dr. Aron Fischer and Elena Dimitrova",
+      "url": "https://www.youtube.com/watch?v=zSF5fGPG4Ro&t=645s"
+    },
+    {
+      "name": "The Mauve Revolution - Vitalik Buterin",
+      "url": "https://www.youtube.com/watch?v=bSdwqa3Yl0Q"
+    },
+    {
+      "name": "Devcon2: Regulatory Considerations for Dapp Development",
+      "url": "https://www.youtube.com/watch?v=5J8BL60_zj8"
+    },
+    {
+      "name": "Plausible deniability - Daniel Nagy",
+      "url": "https://www.youtube.com/watch?v=fOJgNPdwy18"
+    },
+    {
+      "name": "Livepeer Demo - Real time live streaming - Doug Petkanics 1/3",
+      "url": "https://www.youtube.com/watch?v=MB-drzcRCD8"
+    },
+    {
+      "name": "Livepeer Demo - Real time live streaming - Doug Petkanics 2/3",
+      "url": "https://www.youtube.com/watch?v=pQjwySXLm6Y"
+    },
+    {
+      "name": "Livepeer Demo - Real time live streaming - Doug Petkanics 3/3",
+      "url": "https://www.youtube.com/watch?v=wpXBENzAmfg"
+    },
+    {
+      "name": "Ethereum ÐΞVcon-0: Ethereum 1.x: On blockchain interop and scaling",
+      "url": "https://www.youtube.com/watch?v=fwEsXBDFk6c"
+    },
+    {
+      "name": "Vitalik Buterin reveals Ethereum at Bitcoin Miami 2014",
+      "url": "https://www.youtube.com/watch?v=l9dpjN3Mwps"
+    },
+    {
+      "name": "DEVCON1: History of the Blockchain - Nick Szabo",
+      "url": "https://www.youtube.com/watch?v=7Y3fWXA6d5k"
+    },
+    {
+      "name": "Viktor Tron - Distributed Database Services - Swarm Orange Summit 2017",
+      "url": "https://www.youtube.com/watch?v=H9MclB0J6-A"
+    },
+    {
+      "name": "Slacker",
+      "url": "https://www.youtube.com/watch?v=jB4xlYKAVCQ"
+    },
+    {
+      "name": "Dear and Desire",
+      "url": "https://www.youtube.com/watch?v=JbokkV1Roj4"
+    },
+    {
+      "name": "Thelonious Monk - Underground (HD FULL ALBUM)",
+      "url": "https://www.youtube.com/watch?v=eXKIEJ0ez98"
+    },
+    {
+      "name": "SONM Chief Designer telling the story of SONM logo",
+      "url": "https://www.youtube.com/watch?v=CKa5gTPg6aY"
+    },
+    {
+      "name": "SONM The Discovery Algorithm: How it Works",
+      "url": "https://www.youtube.com/watch?v=2MfOQcHooNo"
+    },
+    {
+      "name": "Building the Meta Model in Numerai",
+      "url": "https://www.youtube.com/watch?v=dhJnt0N497c"
+    },
+    {
+      "name": "Trailer Around the Block",
+      "url": "https://www.youtube.com/watch?v=LR1fOVVxqZU&feature=youtu.be"
+    }
+  ],
+  "vimeo": [
+    {
+      "name": "RIP : A Remix Manifesto",
+      "url": "https://vimeo.com/8040182"
+    },
+    {
+      "name": "Radar modular trade networks",
+      "url": "https://vimeo.com/235936621"
+    },
+    {
+      "name": "Introducing Numerai",
+      "url": "https://vimeo.com/205032211"
+    },
+    {
+      "name": "Ethereum itself",
+      "url": "https://vimeo.com/138853988"
+    },
+    {
+      "name": "Introducing the Render Token",
+      "url": "https://vimeo.com/231572056"
+    },
+    {
+      "name": "Santiment: A Better Way to Trade Crypto Markets",
+      "url": "https://vimeo.com/223019832"
+    }
+  ],
+  "unknown": [
+    {
+      "C": "Teaser 1 Around the Block",
+      "D": "Paratii",
+      "E": "is there already"
+    },
+    {
+      "C": "Teaser 2 Around the Block",
+      "D": "Paratii",
+      "E": "is there already"
+    }
+  ]
+}

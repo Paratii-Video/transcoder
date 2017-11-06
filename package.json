@@ -14,6 +14,8 @@
     "fluent-ffmpeg": "^2.1.2",
     "ipfs": "github:ya7ya/js-ipfs#paratii/master",
     "ipfs-api": "^14.3.5",
+    "leveldown": "^2.0.0",
+    "levelup": "^2.0.0",
     "lodash": "^4.17.4",
     "once": "^1.4.0",
     "paratii-protocol": "github:ya7ya/paratii-protocol#master",
@@ -22,6 +24,8 @@
     "pull-stream": "^3.6.1",
     "pull-stream-to-stream": "^1.3.4",
     "tar-stream": "^1.5.4",
+    "vimeo-downloader": "^1.0.3",
+    "xlsx": "^0.11.7",
     "ytdl-core": "^0.18.1"
   }
 }
