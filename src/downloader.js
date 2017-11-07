@@ -12,6 +12,11 @@ log.error = require('debug')('paratii:downloader:error')
 var downloader = {
 
   download: function download (url, output, cb) {
+    let exists = fs.existsSync(output)
+    if (exists) {
+      return cb(null, output)
+    }
+
     let starttime
     let video = ytdl(url)
     video.pipe(fs.createWriteStream(output))
@@ -37,6 +42,11 @@ var downloader = {
     })
   },
   viDownload: function viDownload (url, output, cb) {
+    let exists = fs.existsSync(output)
+    if (exists) {
+      return cb(null, output)
+    }
+
     let starttime
     let video = vidl(url)
     video.pipe(fs.createWriteStream(output))
