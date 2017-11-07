@@ -75,13 +75,14 @@ function startTranscodingJob (job, cb) {
   })
 
   transcoder.start((err, res) => {
-    if (err) throw err
+    if (err) return cb(err)
 
     log('Transcoding Job ', job.hash, ' done')
     // add info + master hash
     data.addVideo(res.master.hash, {result: res, info: job.info}, (err) => {
       if (err) {
-        throw err
+        console.log('addVideo Error ', err)
+        return cb(err)
       }
 
       cb(null, res)
@@ -180,14 +181,14 @@ pipfs.on('ready', () => {
 
     eachSeries(vids.youtube, (record, callback) => {
       downloader.yt.getInfo(record.url, (err, info) => {
-        if (err) throw err
+        if (err) return callback(err)
         downloader.download(
           record.url,
-          path.join(os.tmpdir(), 'yt_' + record.name.replace('/( |\/)/g', '_') + '.mp4'),
+          path.join(os.tmpdir(), 'yt_' + record.name.replace(/( |\/)/g, '_') + '.mp4'),
           (err, output) => {
-            if (err) throw err
+            if (err) return callback(err)
             pipfs.upload([output], (err, resp) => {
-              if (err) throw err
+              if (err) return callback(err)
               qTranscoder.push({
                 peerId: pipfs.id,
                 ipfs: pipfs.ipfs,
