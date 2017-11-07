@@ -66,29 +66,43 @@ function startTranscodingJob (job, cb) {
   if (!job) {
     throw new Error('job is required')
   }
-
-  log('Starting job ', job.hash)
-
-  let transcoder = new Transcoder({
-    ipfs: job.ipfs,
-    sourcePath: job.hash
-  })
-
-  transcoder.start((err, res) => {
-    if (err) return cb(err)
-
-    log('Transcoding Job ', job.hash, ' done')
-    // add info + master hash
-    data.addVideo(res.master.hash, {result: res, info: job.info}, (err) => {
-      if (err) {
-        console.log('addVideo Error ', err)
-        return cb(err)
+  data.getVideo(job.hash, (err, vid) => {
+    if (err) throw err
+    if (vid) {
+      let obj
+      try {
+        obj = JSON.parse(vid)
+      } catch (e) {
+        console.error('video obj cannot be parsed', vid)
       }
 
-      cb(null, res)
-    })
+      return cb(null, obj.result)
+    } else {
 
-    // cb(null, res)
+      log('Starting job ', job.hash)
+
+      let transcoder = new Transcoder({
+        ipfs: job.ipfs,
+        sourcePath: job.hash
+      })
+
+      transcoder.start((err, res) => {
+        if (err) return cb(err)
+
+        log('Transcoding Job ', job.hash, ' done')
+        // add info + master hash
+        data.addVideo(job.hash, {result: res, info: job.info}, (err) => {
+          if (err) {
+            console.log('addVideo Error ', err)
+            return cb(err)
+          }
+
+          cb(null, res)
+        })
+
+        // cb(null, res)
+      })
+    }
   })
 }
 
@@ -96,7 +110,7 @@ function allDone () {
   log('All Transcoding Jobs done!')
 }
 
-var qTranscoder = queue(startTranscodingJob, 1)
+var qTranscoder = queue(startTranscodingJob, 4)
 qTranscoder.drain = allDone
 
 pipfs.on('ready', () => {
