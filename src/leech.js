@@ -67,18 +67,7 @@ function startTranscodingJob (job, cb) {
     throw new Error('job is required')
   }
   data.getVideo(job.hash, (err, vid) => {
-    if (err) throw err
-    if (vid) {
-      let obj
-      try {
-        obj = JSON.parse(vid)
-      } catch (e) {
-        console.error('video obj cannot be parsed', vid)
-      }
-
-      return cb(null, obj.result)
-    } else {
-
+    if (err) {
       log('Starting job ', job.hash)
 
       let transcoder = new Transcoder({
@@ -102,6 +91,16 @@ function startTranscodingJob (job, cb) {
 
         // cb(null, res)
       })
+    } else {
+
+      let obj
+      try {
+        obj = JSON.parse(vid)
+      } catch (e) {
+        console.error('video obj cannot be parsed', vid)
+      }
+
+      return cb(null, obj.result)
     }
   })
 }
