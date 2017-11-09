@@ -33,6 +33,51 @@ class Data {
         callback()
       })
   }
+
+  exportDb (callback) {
+    let output = []
+
+    this.db.createReadStream()
+      .on('data', (data) => {
+        let obj
+        try {
+          obj = data.value.toString()
+          obj = JSON.parse(obj)
+        } catch (e) {
+          console.log('Couldn\'t parse Video ', data.key.toString(), ' | err: ', e)
+        }
+
+        let vid = {
+          id: data.key.toString(),
+          title: obj.info.title,
+          description: obj.info.description,
+          price: 0,
+          src: obj.result.master.hash,
+          mimetype: 'video/mp4',
+          stats: {
+            likes: 0,
+            dislikes: 0
+          },
+          uploader: {
+            name: (obj.info.author) ? obj.info.author.name : obj.info.uploader
+          },
+          tags: obj.info.keywords
+        }
+
+        output.push(vid)
+      })
+      .on('error', (err) => {
+        console.log('Oh my!', err)
+        callback(err)
+      })
+      .on('close', () => {
+        console.log('Data Stream closed')
+      })
+      .on('end', () => {
+        console.log('Data Stream ended')
+        callback(null, output)
+      })
+  }
 }
 
 module.exports = Data
