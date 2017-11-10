@@ -119,6 +119,7 @@ class Transcoder extends EventEmitter {
               if (err) throw err
               // Ref: metadata object example https://github.com/fluent-ffmpeg/node-fluent-ffmpeg#reading-video-metadata
               console.log(metadata)
+              this.duration = metadata.format.duration
               for (var stream of metadata.streams) {
                 if (stream.codec_type === 'video') {
                   this.resolution = {
@@ -128,6 +129,8 @@ class Transcoder extends EventEmitter {
                     availableSizes: conversions[String(stream.height)],
                     bitrate: stream.bit_rate
                   }
+
+                  this.size = file.size
 
                   return cb(null, {
                     width: stream.width,
@@ -153,11 +156,16 @@ class Transcoder extends EventEmitter {
   }
 
   convertTo (sizes, cb) {
+    this.starttime = Date.now()
     this.convertAndAdd(this.sourcePath, sizes, (err, convertedHash) => {
       if (err) return cb(err)
       console.log(`Converted ${sizes.join(',')} : ${JSON.stringify(this.result)}`)
       // this.result[size] = convertedHash
       // cb(null, convertedHash)
+      this.result.totalTimeInMinutes = (Date.now() - this.starttime) / 1000 / 60
+      console.log(`videoDuration: ${this.duration / 60}`)
+      console.log(`totalTimeInMinutes: ${this.result.totalTimeInMinutes.toFixed(2)}`)
+
       cb(null, this.result)
     })
 
@@ -364,7 +372,7 @@ class Transcoder extends EventEmitter {
             if (err) return cb(err)
             let command = ffmpeg(stream.content)
               // .inputOptions('-strict -2')
-              .addOption('-preset', 'fast')
+              .addOption('-preset', 'veryfast')
               .addOption('-framerate', 30)
               .addOption('-tune', 'zerolatency')
               .addOption('-profile:v', 'baseline')
