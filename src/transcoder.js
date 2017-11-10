@@ -363,7 +363,10 @@ class Transcoder extends EventEmitter {
           fs.mkdtemp(path.join(os.tmpdir(), 'paratii-'), (err, folder) => {
             if (err) return cb(err)
             let command = ffmpeg(stream.content)
-              .inputOptions('-strict -2')
+              // .inputOptions('-strict -2')
+              .addOption('-preset', 'fast')
+              .addOption('-framerate', 30)
+              .addOption('-tune', 'zerolatency')
               .addOption('-profile:v', 'baseline')
               .addOption('-level', 3.0)
               .addOption('-start_number', 0)
