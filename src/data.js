@@ -48,7 +48,7 @@ class Data {
         }
 
         let vid = {
-          id: data.key.toString(),
+          _id: data.key.toString(),
           title: obj.info.title,
           description: obj.info.description,
           price: 0,
