@@ -106,7 +106,15 @@ function startTranscodingJob (job, cb) {
 }
 
 function allDone () {
-  log('All Transcoding Jobs done!')
+  data.exportDb((err, output) => {
+    if (err) throw err
+    console.log('done')
+    fs.writeFile('./db_dump.json', JSON.stringify(output), (err, done) => {
+      if (err) throw err
+      console.log('file exported')
+      log('All Transcoding Jobs done!')
+    })
+  })
 }
 
 var qTranscoder = queue(startTranscodingJob, 4)
@@ -192,16 +200,38 @@ pipfs.on('ready', () => {
       if (e) throw e
     }
 
-    eachSeries(vids.youtube, (record, callback) => {
-      downloader.yt.getInfo(record.url, (err, info) => {
-        if (err) return callback(err)
-        downloader.download(
+    // eachSeries(vids.youtube, (record, callback) => {
+    //   downloader.yt.getInfo(record.url, (err, info) => {
+    //     if (err) return callback(err)
+    //     downloader.download(
+    //       record.url,
+    //       path.join(os.tmpdir(), 'yt_' + record.name.replace(/( |\/)/g, '_') + '.mp4'),
+    //       (err, output) => {
+    //         if (err) return callback(err)
+    //         pipfs.upload([output], (err, resp) => {
+    //           if (err) return callback(err)
+    //           qTranscoder.push({
+    //             peerId: pipfs.id,
+    //             ipfs: pipfs.ipfs,
+    //             hash: resp[0].hash,
+    //             info: info // adding info for later parsing
+    //           })
+    //           callback()
+    //         })
+    //       })
+    //   })
+    // })
+
+    eachSeries(vids.vimeo, (record, callback) => {
+      downloader.vi.getInfo(record.url, (err, info) => {
+        if (err) throw err
+        downloader.viDownload(
           record.url,
-          path.join(os.tmpdir(), 'yt_' + record.name.replace(/( |\/)/g, '_') + '.mp4'),
+          path.join(os.tmpdir(), 'vi_' + record.name.replace(/( |\/)/g, '_') + '.mp4'),
           (err, output) => {
-            if (err) return callback(err)
+            if (err) throw err
             pipfs.upload([output], (err, resp) => {
-              if (err) return callback(err)
+              if (err) throw err
               qTranscoder.push({
                 peerId: pipfs.id,
                 ipfs: pipfs.ipfs,
@@ -215,33 +245,13 @@ pipfs.on('ready', () => {
       })
     })
 
-    // eachSeries(vids.vimeo, (record, callback) => {
-    //   downloader.vi.getInfo(record.url, (err, info) => {
-    //     if (err) throw err
-    //     downloader.viDownload(
-    //       record.url,
-    //       path.join(os.tmpdir(), 'vi_' + record.name.replace('/( |\/)/g', '_') + '.mp4'),
-    //       (err, output) => {
-    //         if (err) throw err
-    //         pipfs.upload([output], (err, resp) => {
-    //           if (err) throw err
-    //           qTranscoder.push({
-    //             peerId: pipfs.id,
-    //             ipfs: pipfs.ipfs,
-    //             hash: resp[0].hash,
-    //             info: info, // adding info for later parsing
-    //             sourceUrl: record.url
-    //           })
-    //
-    //           callback()
-    //         })
-    //       })
-    //   })
-    // })
-
-    // data.dumpDb((err) => {
+    // data.exportDb((err, output) => {
     //   if (err) throw err
     //   console.log('done')
+    //   fs.writeFile('./out-youtube.json', JSON.stringify(output), (err, done) => {
+    //     if (err) throw err
+    //     console.log('file exported')
+    //   })
     // })
     // fs.readdir(os.tmpdir(), (err, files) => {
     //   if (err) throw err
