@@ -48,7 +48,7 @@ var downloader = {
     }
 
     let starttime
-    let video = vidl(url)
+    let video = vidl(url, {quality: '720p'})
     video.pipe(fs.createWriteStream(output))
     video.once('response', () => {
       log(`starting ${url}`)
