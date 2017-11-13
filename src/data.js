@@ -1,3 +1,4 @@
+
 'use strict'
 
 const levelup = require('levelup')
@@ -52,7 +53,7 @@ class Data {
           title: obj.info.title,
           description: obj.info.description,
           price: 0,
-          src: obj.result.master.hash,
+          src: '/ipfs/' + obj.result.master.hash,
           mimetype: 'video/mp4',
           thumb: obj.info.thumbnail_url || obj.result.screenshots[0],
           stats: {
@@ -60,6 +61,7 @@ class Data {
             dislikes: 0
           },
           uploader: {
+            address: '0xe19678107410951a9ed1f6906ba4c913eb0e44d4', // arbitrary address for now. FIXME
             name: (obj.info.author) ? obj.info.author.name : obj.info.uploader
           },
           tags: obj.info.keywords
