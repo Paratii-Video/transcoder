@@ -50,8 +50,8 @@ class Data {
 
         let vid = {
           _id: data.key.toString(),
-          title: obj.info.title,
-          description: obj.info.description,
+          title: (obj.info) ? obj.info.title : null,
+          description: (obj.info) ? obj.info.description : null,
           price: 0,
           src: '/ipfs/' + obj.result.master.hash,
           mimetype: 'video/mp4',
@@ -62,9 +62,9 @@ class Data {
           },
           uploader: {
             address: '0xe19678107410951a9ed1f6906ba4c913eb0e44d4', // arbitrary address for now. FIXME
-            name: (obj.info.author) ? obj.info.author.name : obj.info.uploader
+            name: (obj.info) ? ((obj.info.author) ? obj.info.author.name : obj.info.uploader) : 'Paratii'
           },
-          tags: obj.info.keywords
+          tags: (obj.info) ? obj.info.keywords : []
         }
 
         output.push(vid)
