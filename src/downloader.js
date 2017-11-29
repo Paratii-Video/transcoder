@@ -87,12 +87,18 @@ var downloader = {
       output = xlsx.utils.sheet_to_json(worksheet, {header: 'A'})
     })
 
+    let lastPlaylist = null
     // cb(null, output)
     output.forEach((row) => {
       if (!row || !row.E) {
         // no url
         result.noUrl = result.noUrl || []
         result.noUrl.push(row)
+
+        if (row && row.C) {
+          lastPlaylist = row.C
+        }
+
         return
       }
 
@@ -100,19 +106,22 @@ var downloader = {
         result.youtube = result.youtube || []
         result.youtube.push({
           name: row.C,
-          url: row.E
+          url: row.E,
+          playlist: lastPlaylist
         })
       } else if (row.E.match(/vimeo\.com/g)) {
         result.vimeo = result.vimeo || []
         result.vimeo.push({
           name: row.C,
-          url: row.E
+          url: row.E,
+          playlist: lastPlaylist
         })
       } else if (row.E.match(/ted\.com/g)) {
         result.ted = result.ted || []
         result.ted.push({
           name: row.C,
-          url: row.E
+          url: row.E,
+          playlist: lastPlaylist
         })
       } else {
         // unknown format

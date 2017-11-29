@@ -5,12 +5,14 @@ const { queue } = require('async')
 const Transcoder = require('./transcoder')
 const PIPFS = require('./pipfs')
 const downloader = require('./downloader')
+const Data = require('./data')
 
 const log = require('debug')('paratii:transcoder')
 log.error = require('debug')('paratii:transcoder:error')
 
 let testHash = '/ipfs/QmR6QvFUBhHQ288VmpHQboqzLmDrrC2fcTUyT4hSMCwFyj'
 // const testHash = '/ipfs/QmeG4popSYeipnvuvP6u4UxuRfKWTzy6eEMyC54ArFRNiG'
+var data = new Data({})
 
 var pipfs = new PIPFS({
   bitswap: {
@@ -50,46 +52,90 @@ var pipfs = new PIPFS({
   }
 })
 
-// let transcoder = new Transcoder({
-//   sourcePath: testHash
-// })
-//
-// transcoder.start((err, res) => {
-//   if (err) throw err
-//
-//   console.log('done!')
-// })
-
 function startTranscodingJob (job, cb) {
   if (!job) {
     throw new Error('job is required')
   }
+  data.getVideo(job.hash, (err, vid) => {
+    if (err) {
+      log('Starting job ', job.hash)
 
-  log('Starting job ', job.hash)
+      let transcoder = new Transcoder({
+        ipfs: job.ipfs,
+        sourcePath: job.hash
+      })
 
-  let transcoder = new Transcoder({
-    ipfs: job.ipfs,
-    sourcePath: job.hash
-  })
+      transcoder.start((err, res) => {
+        if (err) return cb(err)
 
-  transcoder.start((err, res) => {
-    if (err) throw err
+        log('Transcoding Job ', job.hash, ' done')
+        // add info + master hash
+        data.addVideo(job.hash, {result: res, info: job.info}, (err) => {
+          if (err) {
+            console.log('addVideo Error ', err)
+            return cb(err)
+          }
+          let msg = pipfs.protocol.createCommand('transcoding:done', {hash: job.hash, author: job.peerId, result: JSON.stringify(res)})
+          pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
+            if (err) throw err
+            log('paratii protocol msg sent: ', job.hash)
+          })
 
-    log('Transcoding Job ', job.hash, ' done')
-    let msg = pipfs.protocol.createCommand('transcoding:done', {hash: job.hash, author: job.peerId, result: JSON.stringify(res)})
-    pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
-      if (err) throw err
-      log('paratii protocol msg sent: ', job.hash)
-    })
-    cb(null, res)
+          cb(null, res)
+        })
+
+        // cb(null, res)
+      })
+    } else {
+
+      let obj
+      try {
+        obj = JSON.parse(vid)
+      } catch (e) {
+        console.error('video obj cannot be parsed', vid)
+      }
+
+      let msg = pipfs.protocol.createCommand('transcoding:done', {hash: job.hash, author: job.peerId, result: JSON.stringify(obj)})
+      pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
+        if (err) throw err
+        log('paratii protocol msg sent: ', job.hash)
+      })
+
+      return cb(null, obj.result)
+    }
   })
 }
+
+// function startTranscodingJob (job, cb) {
+//   if (!job) {
+//     throw new Error('job is required')
+//   }
+//
+//   log('Starting job ', job.hash)
+//
+//   let transcoder = new Transcoder({
+//     ipfs: job.ipfs,
+//     sourcePath: job.hash
+//   })
+//
+//   transcoder.start((err, res) => {
+//     if (err) throw err
+//
+//     log('Transcoding Job ', job.hash, ' done')
+//     let msg = pipfs.protocol.createCommand('transcoding:done', {hash: job.hash, author: job.peerId, result: JSON.stringify(res)})
+//     pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
+//       if (err) throw err
+//       log('paratii protocol msg sent: ', job.hash)
+//     })
+//     cb(null, res)
+//   })
+// }
 
 function allDone () {
   log('All Transcoding Jobs done!')
 }
 
-var qTranscoder = queue(startTranscodingJob, 1)
+var qTranscoder = queue(startTranscodingJob, 4)
 qTranscoder.drain = allDone
 
 pipfs.on('ready', () => {
@@ -111,63 +157,14 @@ pipfs.on('ready', () => {
     })
   })
 
-  // Youtube Download Test
-  // const url = 'https://www.youtube.com/watch?v=fULtYTDgZgA'
-  // downloader.yt.getInfo(url, (err, info) => {
-  //   if (err) throw err
-  //   console.log('info : ', info)
-  // })
-  // const output = path.resolve(__dirname, '../video.mp4')
-  // downloader.download(url, output, (err, out) => {
-  //   if (err) throw err
+  // pipfs.on('rip', (peerId, command) => {
+  //   log('video rip: ', command.payload.toString())
+  //   let args = JSON.parse(command.args.toString())
   //
-  //   log('downloader called back , uploading to IPFS')
-  //   pipfs.upload([out], (err, resp) => {
-  //     if (err) throw err
-  //     log('upload finished ', resp)
-  //     qTranscoder.push({
-  //       peerId: pipfs.id,
-  //       ipfs: pipfs.ipfs,
-  //       hash: resp[0].hash
-  //     })
+  //   qTranscoder.push({
+  //     peerId: peerId,
+  //     ipfs: pipfs.ipfs,
+  //     hash: args.hash
   //   })
-  // })
-
-
-  // downloader.parseXlsx('./content_vids.xlsx', (err, result) => {
-  //   if (err) throw err
-  //   console.log('result: ', result)
-  //
-  //   require('fs').writeFile('./vids.json', JSON.stringify(result), (err, done) => {
-  //     if (err) throw err
-  //     console.log('done')
-  //   })
-  //
-  //   if (result && result.youtube) {
-  //     result.youtube.forEach((record) => {
-  //       downloader.download(
-  //         record.url,
-  //         path.join(os.tmpdir(), 'yt_' + record.name.replace('/ /g', '_') + '.mp4'),
-  //         (err, output) => {
-  //           if (err) throw err
-  //           pipfs.upload([output], (err, resp) => {
-  //             if (err) throw err
-  //             qTranscoder.push({
-  //               peerId: pipfs.id,
-  //               ipfs: pipfs.ipfs,
-  //               hash: resp[0].hash
-  //             })
-  //           })
-  //         })
-  //     })
-  //   }
-  // })
-
-  // const vidl = require('vimeo-downloader')
-  // const url = 'https://vimeo.com/129522659'
-  // downloader.viDownload(url, './vimeo-video.mp4', (err, output) => {
-  //   if (err) throw err
-  //
-  //   console.log('output: ', output)
   // })
 })

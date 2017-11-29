@@ -55,7 +55,7 @@ class Data {
           price: 0,
           src: '/ipfs/' + obj.result.master.hash,
           mimetype: 'video/mp4',
-          thumb: obj.info.thumbnail_url || obj.result.screenshots[0],
+          thumb: '/ipfs/' + obj.result.master.hash + '/' + obj.result.screenshots[Math.floor(Math.random() * obj.result.screenshots.length)],
           stats: {
             likes: 0,
             dislikes: 0

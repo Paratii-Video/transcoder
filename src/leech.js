@@ -139,6 +139,20 @@ pipfs.on('ready', () => {
     })
   })
 
+  var aroundTheBlock = [
+    'QmayHsEJfu1Pq5q1k3c9f9z14fh6AyJsam4LFbSQYWMXZt',
+    'QmcSHvFsGEU36viAkXo5PAkz1YgsorzT5LXR8uAnugJ7Hg'
+  ]
+
+  aroundTheBlock.forEach((hash) => {
+    qTranscoder.push({
+      peerId: pipfs.id,
+      ipfs: pipfs.ipfs,
+      hash: hash,
+      info: null // adding info for later parsing
+    })
+  })
+
   // Youtube Download Test
   // const url = 'https://www.youtube.com/watch?v=fULtYTDgZgA'
   // downloader.yt.getInfo(url, (err, info) => {
@@ -171,24 +185,69 @@ pipfs.on('ready', () => {
   //     console.log('done')
   //   })
   //
-  //   if (result && result.youtube) {
-  //     result.youtube.forEach((record) => {
-  //       downloader.download(
-  //         record.url,
-  //         path.join(os.tmpdir(), 'yt_' + record.name.replace('/ /g', '_') + '.mp4'),
-  //         (err, output) => {
-  //           if (err) throw err
-  //           pipfs.upload([output], (err, resp) => {
-  //             if (err) throw err
-  //             qTranscoder.push({
-  //               peerId: pipfs.id,
-  //               ipfs: pipfs.ipfs,
-  //               hash: resp[0].hash
-  //             })
-  //           })
-  //         })
-  //     })
+  //   // if (result && result.youtube) {
+  //   //   result.youtube.forEach((record) => {
+  //   //     downloader.download(
+  //   //       record.url,
+  //   //       path.join(os.tmpdir(), 'yt_' + record.name.replace('/ /g', '_') + '.mp4'),
+  //   //       (err, output) => {
+  //   //         if (err) throw err
+  //   //         pipfs.upload([output], (err, resp) => {
+  //   //           if (err) throw err
+  //   //           qTranscoder.push({
+  //   //             peerId: pipfs.id,
+  //   //             ipfs: pipfs.ipfs,
+  //   //             hash: resp[0].hash
+  //   //           })
+  //   //         })
+  //   //       })
+  //   //   })
+  //   // }
+  // })
+
+  // fs.readFile('./vids-playlist.json', (err, vids) => {
+  //   if (err) throw err
+  //
+  //   try {
+  //     vids = JSON.parse(vids)
+  //   } catch (e) {
+  //     if (e) throw e
   //   }
+  //
+  //   fs.readFile('./db_dump.json', (err, videoObjects) => {
+  //     if (err) throw err
+  //
+  //     try {
+  //       videoObjects = JSON.parse(videoObjects)
+  //     } catch (e) {
+  //       if (e) throw e
+  //     }
+  //
+  //     let storeByTitle = {}
+  //     let playlists = {}
+  //     videoObjects.forEach((record, index) =>{
+  //       storeByTitle[record.title] = record
+  //     })
+  //
+  //     console.log(Object.keys(storeByTitle))
+  //     let allvids = []
+  //     allvids = allvids.concat(vids.youtube)
+  //     allvids = allvids.concat(vids.vimeo)
+  //     allvids = allvids.concat(vids.ted)
+  //
+  //     allvids.forEach((record, i) => {
+  //       if (record && record.playlist) {
+  //         playlists[record.playlist] = playlists[record.playlist] || []
+  //         if (storeByTitle[record.name]) {
+  //           playlists[record.playlist].push(storeByTitle[record.name]._id)
+  //         } else {
+  //           console.log(`video ${record.name} is not found`)
+  //         }
+  //       }
+  //     })
+  //
+  //     console.log(playlists)
+  //   })
   // })
 
   fs.readFile('./vids.json', (err, vids) => {
@@ -200,27 +259,27 @@ pipfs.on('ready', () => {
       if (e) throw e
     }
 
-    eachSeries(vids.youtube, (record, callback) => {
-      downloader.yt.getInfo(record.url, (err, info) => {
-        if (err) return callback(err)
-        downloader.download(
-          record.url,
-          path.join(os.tmpdir(), 'yt_' + record.name.replace(/( |\/)/g, '_') + '.mp4'),
-          (err, output) => {
-            if (err) return callback(err)
-            pipfs.upload([output], (err, resp) => {
-              if (err) return callback(err)
-              qTranscoder.push({
-                peerId: pipfs.id,
-                ipfs: pipfs.ipfs,
-                hash: resp[0].hash,
-                info: info // adding info for later parsing
-              })
-              callback()
-            })
-          })
-      })
-    })
+    // eachSeries(vids.youtube, (record, callback) => {
+    //   downloader.yt.getInfo(record.url, (err, info) => {
+    //     if (err) return callback(err)
+    //     downloader.download(
+    //       record.url,
+    //       path.join(os.tmpdir(), 'yt_' + record.name.replace(/( |\/)/g, '_') + '.mp4'),
+    //       (err, output) => {
+    //         if (err) return callback(err)
+    //         pipfs.upload([output], (err, resp) => {
+    //           if (err) return callback(err)
+    //           qTranscoder.push({
+    //             peerId: pipfs.id,
+    //             ipfs: pipfs.ipfs,
+    //             hash: resp[0].hash,
+    //             info: info // adding info for later parsing
+    //           })
+    //           callback()
+    //         })
+    //       })
+    //   })
+    // })
 
     // eachSeries(vids.vimeo, (record, callback) => {
     //   downloader.vi.getInfo(record.url, (err, info) => {
@@ -245,14 +304,14 @@ pipfs.on('ready', () => {
     //   })
     // })
 
-    // data.exportDb((err, output) => {
-    //   if (err) throw err
-    //   console.log('done')
-    //   fs.writeFile('./out-youtube.json', JSON.stringify(output), (err, done) => {
-    //     if (err) throw err
-    //     console.log('file exported')
-    //   })
-    // })
+    data.exportDb((err, output) => {
+      if (err) throw err
+      console.log('done')
+      fs.writeFile('./out-youtube.json', JSON.stringify(output), (err, done) => {
+        if (err) throw err
+        console.log('file exported')
+      })
+    })
     // fs.readdir(os.tmpdir(), (err, files) => {
     //   if (err) throw err
     //   eachSeries(files, (file, callback) => {
