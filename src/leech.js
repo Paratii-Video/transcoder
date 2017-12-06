@@ -109,7 +109,7 @@ function allDone () {
   data.exportDb((err, output) => {
     if (err) throw err
     console.log('done')
-    fs.writeFile('./db_dump.json', JSON.stringify(output), (err, done) => {
+    fs.writeFile('./db_dump2.json', JSON.stringify(output), (err, done) => {
       if (err) throw err
       console.log('file exported')
       log('All Transcoding Jobs done!')
@@ -176,11 +176,11 @@ pipfs.on('ready', () => {
   // })
 
 
-  // downloader.parseXlsx('./content_vids.xlsx', (err, result) => {
+  // downloader.parseXlsx('./new_content.xlsx', (err, result) => {
   //   if (err) throw err
   //   console.log('result: ', result)
   //
-  //   require('fs').writeFile('./vids.json', JSON.stringify(result), (err, done) => {
+  //   require('fs').writeFile('./new_vids.json', JSON.stringify(result), (err, done) => {
   //     if (err) throw err
   //     console.log('done')
   //   })
@@ -250,7 +250,7 @@ pipfs.on('ready', () => {
   //   })
   // })
 
-  fs.readFile('./vids.json', (err, vids) => {
+  fs.readFile('./new_vids.json', (err, vids) => {
     if (err) throw err
 
     try {
@@ -304,14 +304,14 @@ pipfs.on('ready', () => {
     //   })
     // })
 
-    data.exportDb((err, output) => {
-      if (err) throw err
-      console.log('done')
-      fs.writeFile('./out-youtube.json', JSON.stringify(output), (err, done) => {
-        if (err) throw err
-        console.log('file exported')
-      })
-    })
+    // data.exportDb((err, output) => {
+    //   if (err) throw err
+    //   console.log('done')
+    //   fs.writeFile('./out-youtube.json', JSON.stringify(output), (err, done) => {
+    //     if (err) throw err
+    //     console.log('file exported')
+    //   })
+    // })
     // fs.readdir(os.tmpdir(), (err, files) => {
     //   if (err) throw err
     //   eachSeries(files, (file, callback) => {
