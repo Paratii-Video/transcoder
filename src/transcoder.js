@@ -187,7 +187,7 @@ class Transcoder extends EventEmitter {
     master += '#EXT-X-VERSION:6\n'
 
     let resolutionLine = (size) => {
-      return `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${this.getBitrate(size)},CODECS="avc1.4d001f,mp4a.40.2",RESOLUTION=${this.getHeight(size)}\n,NAME=${this.getHeight(size)}`
+      return `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${this.getBitrate(size)},CODECS="avc1.4d001f,mp4a.40.2",RESOLUTION=${this.getHeight(size)},NAME=${size}\n`
     }
     let result = master
     log('availableSizes: ', formats.resolution.availableSizes)
