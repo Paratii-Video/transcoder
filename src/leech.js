@@ -85,14 +85,20 @@ function startTranscodingJob (job, cb) {
             console.log('addVideo Error ', err)
             return cb(err)
           }
-
-          cb(null, res)
+          data.exportDb((err, output) => {
+            if (err) throw err
+            console.log('done')
+            fs.writeFile('./db_dump2.json', JSON.stringify(output), (err, done) => {
+              if (err) throw err
+              console.log('file exported')
+              cb(null, res)
+            })
+          })
         })
 
         // cb(null, res)
       })
     } else {
-
       let obj
       try {
         obj = JSON.parse(vid)
