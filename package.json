@@ -12,7 +12,7 @@
     "async": "^2.5.0",
     "ffmpeg-stream": "^0.5.0",
     "fluent-ffmpeg": "^2.1.2",
-    "ipfs": "github:ya7ya/js-ipfs#paratii/master",
+    "ipfs": "github:paratii-video/js-ipfs#paratii/v0.27.1",
     "ipfs-api": "^14.3.5",
     "leveldown": "^2.0.0",
     "levelup": "^2.0.0",
