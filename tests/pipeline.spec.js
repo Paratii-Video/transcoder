@@ -6,7 +6,7 @@ const dirtyChai = require('dirty-chai')
 const assert = chai.assert
 // const expect = chai.expect
 chai.use(dirtyChai)
-const { each } = require('async')
+const { each, setImmediate } = require('async')
 
 const Pipeline = require('../src/pipeline')
 
@@ -34,26 +34,36 @@ describe('# Pipeline Spec', function () {
     // console.log('pipeline waiting list length: ', pipeline._queue.length())
   }).timeout(20000)
 
-  it('run multiple jobs, remove one in progress', (done) => {
+  it('run multiple jobs, remove one from queue', (done) => {
     let jobs = [
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
-      {hash: String(Math.random() * 100), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
       {hash: String(Math.random() * 100), priority: 1}
     ]
 
     each(jobs, pipeline.push.bind(pipeline), (err) => {
       if (err) return done(err)
+      // done()
+    })
+
+    pipeline.once('drained', () => {
       console.log('all jobs are done')
       done()
     })
 
-    console.log('pipeline waiting list length: ', pipeline._queue.length())
+    setImmediate(() => {
+      console.log('pipeline waiting list length: ', pipeline._queue.length())
+      setTimeout(() => {
+        console.log('removing job #', jobs[7].hash)
+        pipeline._queue.remove((task, priority) => { return (task.data.hash === jobs[7].hash) })
+      }, 1000)
+    })
   }).timeout(25000)
 })

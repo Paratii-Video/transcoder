@@ -28,6 +28,15 @@ class Pipeline extends EventEmitter {
 
     this._options = dopts(opts, defaults, {allowUnknown: true})
     this._queue = priorityQueue(this._processJob.bind(this), this._options.concurrency)
+    this._queue.drain = this._drained.bind(this)
+  }
+
+  /**
+   * callback when the queue has finished all the tasks.
+   * @return {event} returns event drained for now.
+   */
+  _drained () {
+    this.emit('drained')
   }
 
   /**
@@ -48,10 +57,22 @@ class Pipeline extends EventEmitter {
     // --------------------------
   }
 
+  /**
+   * calculate job priority based on fee paid
+   * @param  {Object}   job      job object.
+   * @param  {Function} callback (err, priority)
+   * @return {number}            returns priority
+   */
   _calculatePriority (job, callback) {
     // TODO calculate priority
   }
 
+  /**
+   * adds a job the the pipeline queue
+   * @param  {Object}   job      Job Object info.
+   * @param  {Function} callback (err, status) callback
+   * @return {Object}            returns a status object once the job is complete.
+   */
   push (job, callback) {
     if (!job) {
       return callback(new Error('[pipeline] job is required job: ' + job))
@@ -96,7 +117,8 @@ class Pipeline extends EventEmitter {
             console.log(`Job ${job.hash} is currently in progress.`)
             break
           default:
-            return callback(new Error('video status is unkown : ' + status))
+            console.log(`Job ${job.hash} is unkown ${status}`)
+            // return callback(new Error('video status is unknown : ' + status))
         }
         return callback(null, status)
       }
