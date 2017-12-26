@@ -24,10 +24,10 @@ const dataOps = {
    * @param {String}   val      current status of the video
    * @param {Function} callback err callback
    */
-  updateStatus: (originHash, val, callback) => {
+  updateStatus: (originHash, val) => {
     // TODO: add a log to record time of updatestatus
     // TODO: trigger an update event. use sublevel built-in events ??? maybe.
-    db.status.put(originHash, val, callback)
+    db.status.put(originHash, val)
   },
 
   // ------------------------[Info Ops]-----------------------------------------

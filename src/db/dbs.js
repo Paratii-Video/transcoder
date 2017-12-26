@@ -23,12 +23,12 @@ const sublevel = require('level-sublevel')
 const mainDB = sublevel(levelup(leveldown('./datastore')))
 
 const db = {
-  status: mainDB.sub('status'),
-  info: mainDB.sub('info'),
-  origin2Transcoded: mainDB.sub('origin2Transcoded'),
-  transcoded2Origin: mainDB.sub('transcoded2Origin'),
-  owner2Videos: mainDB.sub('owner2videos'),
-  pubKey2Videos: mainDB.sub('pubKey2Videos')
+  status: mainDB.sublevel('status'),
+  info: mainDB.sublevel('info'),
+  origin2Transcoded: mainDB.sublevel('origin2Transcoded'),
+  transcoded2Origin: mainDB.sublevel('transcoded2Origin'),
+  owner2Videos: mainDB.sublevel('owner2videos'),
+  pubKey2Videos: mainDB.sublevel('pubKey2Videos')
 }
 
 module.exports = db
