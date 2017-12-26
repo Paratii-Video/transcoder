@@ -11,7 +11,7 @@ const { each, setImmediate } = require('async')
 const Pipeline = require('../src/pipeline')
 
 describe('# Pipeline Spec', function () {
-  // this.timeout(12000)
+  this.timeout(20000)
 
   let pipeline
   before((done) => {
@@ -66,4 +66,40 @@ describe('# Pipeline Spec', function () {
       }, 1000)
     })
   }).timeout(25000)
+
+  it('get queue stats', (done) => {
+    let jobs = [
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.floor(Math.random() * 1000)), priority: 1},
+      {hash: String(Math.random() * 100), priority: 1}
+    ]
+
+    each(jobs, pipeline.push.bind(pipeline), (err) => {
+      if (err) return done(err)
+      // done()
+    })
+
+    pipeline.once('drained', () => {
+      console.log('all jobs are done')
+      done()
+    })
+
+    setTimeout(() => {
+      let stats = pipeline.stats()
+      assert.isOk(stats)
+      assert.equal(stats.running, true)
+      console.log('currently processing : ', stats.workersList.map((task) => {
+        return task.data
+      }))
+
+      console.log('stats ongoing: ', stats.ongoing)
+    }, 1000)
+  })
 })

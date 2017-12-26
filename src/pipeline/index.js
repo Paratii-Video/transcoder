@@ -116,13 +116,31 @@ class Pipeline extends EventEmitter {
           case 'in-progress':
             console.log(`Job ${job.hash} is currently in progress.`)
             break
+          case 'finished':
+            console.log(`Job ${job.hash} is already finished.`)
+            break
           default:
-            console.log(`Job ${job.hash} is unkown ${status}`)
+            console.log(`Job ${job.hash} is unknown ${status}`)
             // return callback(new Error('video status is unknown : ' + status))
         }
         return callback(null, status)
       }
     })
+  }
+
+  /**
+   * get queue stats
+   * @return {Object} returns number of stats from the queue.
+   */
+  stats () {
+    return {
+      running: this._queue.started,
+      queued: this._queue.length(),
+      inprogress: this._queue.running(),
+      concurrency: this._queue.concurrency,
+      workersList: this._queue.workersList(),
+      ongoing: this._queue.workersList().map((task) => { return task.data })
+    }
   }
 }
 
