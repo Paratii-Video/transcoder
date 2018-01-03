@@ -106,6 +106,24 @@ module.exports = {
     return String(Math.floor((width * s) / height) + 'x' + s)
   },
 
+  /**
+   * convert duration string to seconds
+   * @param  {string} duration duration string @example '00:01:00.19'
+   * @return {Float}          duration in seconds.
+   */
+  getDurationInSeconds: function (duration) {
+    if (!duration) {
+      return null
+    }
+
+    let durationArray = duration.split(':')
+    let hours = parseInt(durationArray[0])
+    let minutes = parseInt(durationArray[1])
+    let seconds = parseFloat(durationArray[2])
+
+    return (hours * 60 * 60) + (minutes * 60) + seconds
+  },
+
   generateBitrateDefinition: function (bitrate) {
 
   }

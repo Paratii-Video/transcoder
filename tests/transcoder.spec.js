@@ -67,4 +67,11 @@ describe('## Transcoder Utils', function () {
     expect(bandwidth).to.equal('64000')
     done()
   })
+
+  it('getDurationInSeconds', (done) => {
+    let durationInSeconds = tutils.getDurationInSeconds('00:01:00.19')
+    assert.isOk(durationInSeconds)
+    expect(durationInSeconds).to.equal(60.19)
+    done()
+  })
 })
