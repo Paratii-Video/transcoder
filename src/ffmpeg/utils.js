@@ -124,6 +124,28 @@ module.exports = {
     return (hours * 60 * 60) + (minutes * 60) + seconds
   },
 
+  /**
+   * get percent of transcoded video
+   * @param  {String} currentTimemark duration string of the current timemark
+   * @param  {String} duration        video duration
+   * @return {Float}                 percent completed.
+   */
+  getProgressPercent: function (currentTimemark, duration) {
+    if (!duration) {
+      return null
+    }
+
+    currentTimemark = module.exports.getDurationInSeconds(currentTimemark)
+    duration = module.exports.getDurationInSeconds(duration)
+
+    // never divide by zero. cuz math.
+    if (parseInt(duration) === 0) {
+      return 0
+    }
+
+    return parseFloat((currentTimemark / duration) * 100)
+  },
+
   generateBitrateDefinition: function (bitrate) {
 
   }

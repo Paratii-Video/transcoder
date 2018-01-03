@@ -74,4 +74,12 @@ describe('## Transcoder Utils', function () {
     expect(durationInSeconds).to.equal(60.19)
     done()
   })
+
+  it('getProgressPrecent', (done) => {
+    let percent = tutils.getProgressPercent('00:00:30.0', '00:01:00.19')
+    // console.log('precent: ', percent.toFixed(2))
+    assert.isOk(percent)
+    expect(percent.toFixed(2)).to.equal('49.84')
+    done()
+  })
 })
