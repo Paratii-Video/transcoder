@@ -30,6 +30,7 @@ class Job extends EventEmitter {
 
     this.hash = opts.hash
     this.pipfs = opts.pipfs
+    this.meta = {}
   }
 
   _generateId () {
@@ -46,6 +47,7 @@ class Job extends EventEmitter {
         outputedFileNames = filenames
       })
       .on('end', () => {
+        console.log('screenshots generated!')
         callback(null, outputedFileNames)
       })
       .screenshots({
@@ -60,7 +62,7 @@ class Job extends EventEmitter {
     master += '#EXT-X-VERSION:6\n'
 
     let resolutionLine = (size) => {
-      return `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${tutils.getBandwidth(tutils.getHeight(size))},CODECS="avc1.4d001f,mp4a.40.2",RESOLUTION=${tutils.calculateWidth(this.codecData, tutils.getHeight(size))},NAME=${size}\n`
+      return `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${tutils.getBandwidth(tutils.getHeight(size))},CODECS="avc1.4d001f,mp4a.40.2",RESOLUTION=${tutils.calculateWidth(this.codecData, tutils.getHeight(size))},NAME=${tutils.getHeight(size)}\n`
     }
     let result = master
     console.log('availableSizes: ', this.resolution.availableSizes)
@@ -99,6 +101,8 @@ class Job extends EventEmitter {
               availableSizes: tutils.getPossibleBitrates(stream.height),
               bitrate: stream.bit_rate
             }
+
+            this.meta.video = stream
 
             return cb(null, {
               width: stream.width,
@@ -149,12 +153,6 @@ class Job extends EventEmitter {
         // include all the segments in the list
         .addOption('-hls_list_size', 0)
         .addOption('-f', 'hls')
-        .on('codecData', (data) => {
-          console.log('data: ', data)
-          this.codecData = data
-          console.log('Input is ' + data.audio + ' audio ' +
-            'with ' + data.video + ' video')
-        })
         .on('stderr', (out) => {
           console.log('stderr: ', out)
         })
@@ -170,7 +168,7 @@ class Job extends EventEmitter {
           console.log('data: ', data)
           this.codecData = data
           console.log('Input is ' + data.audio + ' audio ' +
-          'with ' + data.video + ' video')
+            'with ' + data.video + ' video')
         })
         .on('end', () => {
           console.log(this.id, ':', size, '\t DONE')
@@ -182,7 +180,7 @@ class Job extends EventEmitter {
         })
         .on('progress', (progress) => {
           console.log(this.id, ':', size, '\t',
-            tutils.getProgressPercent(progress.timemark, this.codecData.duration))
+            tutils.getProgressPercent(progress.timemark, this.codecData.duration).toFixed(2))
         })
         .save(this.rootPath + '/' + String(size.split('x')[1]) + '.m3u8')
         .run()
@@ -199,7 +197,8 @@ class Job extends EventEmitter {
             this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
               if (err) return cb(this._handleError(err))
               this.result.screenshots = screenshots
-              this.pipfs.addDirToIPFS(this.result.root, (err, resp) => {
+              console.log('rootPath: ', this.rootPath)
+              this.pipfs.addDirToIPFS(this.rootPath, (err, resp) => {
                 if (err) return cb(this._handleError(err))
                 console.log('Master Playlist is added to IPFS ', resp)
                 this.result.master = resp

@@ -190,3 +190,25 @@ describe('# pipeline', function () {
   //    'stereo',
   //    'fltp',
   //    '125 kb/s (default)' ] }
+
+// fragged file codecData
+// data:  { format: 'mov,mp4,m4a,3gp,3g2,mj2',
+// audio: 'aac (LC) (mp4a / 0x6134706D)',
+// video: 'h264 (Constrained Baseline) (avc1 / 0x31637661)',
+// duration: '00:00:02.67',
+// audio_details:
+//  [ 'aac (LC) (mp4a / 0x6134706D)',
+//    '22050 Hz',
+//    'stereo',
+//    'fltp',
+//    '64 kb/s (default)' ],
+// video_details:
+//  [ 'h264 (Constrained Baseline) (avc1 / 0x31637661)',
+//    'yuv420p(tv',
+//    'smpte170m/smpte170m/bt709)',
+//    '640x360',
+//    '416 kb/s',
+//    '24 fps',
+//    '24 tbr',
+//    '600 tbn',
+//    '1200 tbc (default)' ] }

@@ -119,55 +119,54 @@ class PIPFS extends EventEmitter {
   addDirToIPFS (dirPath, cb) {
     cb = once(cb)
     let resp = null
-    this.ipfs.files.createAddStream((err, addStream) => {
+    console.log('adding ', dirPath, ' to IPFS')
+    const addStream = this.ipfs.files.addReadableStream()
+    addStream.on('data', (file) => {
+      console.log('dirPath ', dirPath)
+      console.log('file Added ', file)
+      if ('/' + file.path === dirPath) {
+        console.log('this is the hash to return ')
+        resp = file
+        nextTick(() => cb(null, resp))
+      }
+    })
+
+    addStream.on('end', () => {
+      console.log('addStream ended')
+      // nextTick(() => cb(null, resp))
+    })
+
+    fs.readdir(dirPath, (err, files) => {
       if (err) return cb(err)
-      addStream.on('data', (file) => {
-        console.log('dirPath ', dirPath)
-        console.log('file Added ', file)
-        if ('/' + file.path === dirPath) {
-          console.log('this is the hash to return ')
-          resp = file
-          nextTick(() => cb(null, resp))
-        }
-      })
-
-      addStream.on('end', () => {
-        console.log('addStream ended')
-        // nextTick(() => cb(null, resp))
-      })
-
-      fs.readdir(dirPath, (err, files) => {
-        if (err) return cb(err)
-        eachSeries(files, (file, next) => {
-          next = once(next)
-          try {
-            console.log('reading file ', file)
-            let rStream = fs.createReadStream(path.join(dirPath, file))
-            rStream.on('error', (err) => {
-              if (err) {
-                log('rStream Error ', err)
-                return next()
-              }
+      eachSeries(files, (file, next) => {
+        next = once(next)
+        try {
+          console.log('reading file ', file)
+          let rStream = fs.createReadStream(path.join(dirPath, file))
+          rStream.on('error', (err) => {
+            if (err) {
+              log('rStream Error ', err)
+              return next()
+            }
+          })
+          if (rStream) {
+            addStream.write({
+              path: path.join(dirPath, file),
+              content: rStream
             })
-            if (rStream) {
-              addStream.write({
-                path: path.join(dirPath, file),
-                content: rStream
-              })
-            }
-          } catch (e) {
-            if (e) {
-              console.log('gotcha ', e)
-            }
-          } finally {
           }
-          // next()
-          nextTick(() => next())
-        }, (err) => {
-          if (err) return cb(err)
-          // addStream.destroy()
-          addStream.end()
-        })
+        } catch (e) {
+          if (e) {
+            console.log('gotcha ', e)
+          }
+        } finally {
+        }
+        // next()
+        nextTick(() => next())
+      }, (err) => {
+        if (err) return cb(err)
+        // addStream.destroy()
+        addStream.end()
       })
     })
   }
