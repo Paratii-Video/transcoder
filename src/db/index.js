@@ -2,7 +2,11 @@
 
 const { parallel } = require('async')
 const db = require('./dbs')
-
+const handleError = (err) => {
+  if (err) {
+    console.log('unhandled DB ERROR: ', err)
+  }
+}
 /**
  * All the data functions
  * @type {Object}
@@ -24,10 +28,13 @@ const dataOps = {
    * @param {String}   val      current status of the video
    * @param {Function} callback err callback
    */
-  updateStatus: (originHash, val) => {
+  updateStatus: (originHash, val, callback) => {
+    if (!callback) {
+      callback = handleError
+    }
     // TODO: add a log to record time of updatestatus
     // TODO: trigger an update event. use sublevel built-in events ??? maybe.
-    db.status.put(originHash, val)
+    db.status.put(originHash, val, callback)
   },
 
   /**
@@ -47,7 +54,10 @@ const dataOps = {
    * @param  {Function} callback returns (err, info), info Obj spec ???
    */
   getInfo: (hash, callback) => {
-    db.info.get(hash, callback)
+    db.info.get(hash, (err, infoStr) => {
+      if (err) return callback(err)
+      return callback(null, JSON.parse(infoStr))
+    })
   },
 
   /**
@@ -111,6 +121,10 @@ const dataOps = {
    * @param  {Function} callback   async parallel callback.
    */
   updateHashIndex: (origin, transcoded, callback) => {
+    if (!callback) {
+      callback = handleError
+    }
+
     if (!origin || !transcoded) {
       return callback(new Error('both origin and transcoded are required by updateHashIndex'))
     }
@@ -124,6 +138,65 @@ const dataOps = {
       }], callback)
   },
 
+  // --------------------------[Id Index]----------------------------------
+  /**
+   * get both origin & transcoded hashes from id
+   * @param  {String}   id       UUID of the Job
+   * @param  {Function} callback (err, hashes)
+   * @return {Object}            origin & transcoded hash(if available)
+   */
+  getHashesById: (id, callback) => {
+    if (!id) {
+      return callback(new Error('Id is required to get Hashes'))
+    }
+
+    db.idIndex.get(id, (err, str) => {
+      if (err) return callback(err)
+      return callback(null, JSON.parse(str))
+    })
+  },
+
+  /**
+   * adds a new id to the db
+   * @param {String} id     UUID of the Job
+   * @param {String} origin IPFS hash of the original video
+   */
+  addId: (id, origin, callback) => {
+    if (!callback) {
+      callback = handleError
+    }
+
+    if (!id || !origin) {
+      return callback(new Error('both id and origin are required to add ID to DB'))
+    }
+
+    db.idIndex.put(id, JSON.stringify({origin: origin}), callback)
+  },
+
+  /**
+   * updates idIndex with the transcoding hash
+   * @param {String}   id       UUID of the Job
+   * @param {String}   hash     IPFS hash of transcoded video
+   * @param {Function} callback (err)
+   */
+  addTranscodedHash: (id, hash, callback) => {
+    if (!callback) {
+      callback = handleError
+    }
+
+    if (!id || !hash) {
+      return callback(new Error('both id and hash are required to update ID in DB'))
+    }
+
+    module.exports.getHashesById(id, (err, obj) => {
+      if (err) {
+        return callback(err)
+      }
+
+      obj.transcoded = hash
+      db.idIndex.put(id, JSON.stringify(obj), callback)
+    })
+  },
   // --------------------------[ownership Ops]----------------------------------
   /**
    * get an array of videos owned by ETH address

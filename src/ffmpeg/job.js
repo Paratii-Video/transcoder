@@ -11,7 +11,8 @@ const { forEach } = require('lodash')
 const once = require('once')
 
 const tutils = require('./utils')
-// const db = require('../db')
+const db = require('../db')
+
 const config = {
   FFMPEG_PATH: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
   FFPROBE_PATH: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
@@ -31,6 +32,8 @@ class Job extends EventEmitter {
     this.hash = opts.hash
     this.pipfs = opts.pipfs
     this.meta = {}
+    // add the Id to the db
+    db.addId(this.id, this.hash)
   }
 
   _generateId () {
@@ -192,16 +195,26 @@ class Job extends EventEmitter {
         this.generateManifest((err, masterPlaylist) => {
           if (err) return cb(this._handleError(err))
           console.log('masterPlaylist: ', masterPlaylist)
+
           fs.writeFile(this.result.root + '/master.m3u8', masterPlaylist, (err, done) => {
             if (err) return cb(this._handleError(err))
+
             this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
               if (err) return cb(this._handleError(err))
               this.result.screenshots = screenshots
               console.log('rootPath: ', this.rootPath)
+
               this.pipfs.addDirToIPFS(this.rootPath, (err, resp) => {
                 if (err) return cb(this._handleError(err))
                 console.log('Master Playlist is added to IPFS ', resp)
                 this.result.master = resp
+
+                // update the DB ---------------------
+                db.addTranscodedHash(this.id, this.result.master.hash)
+                db.updateHashIndex(this.hash, this.result.master.hash)
+                db.updateInfo(this.id, {result: this.result, meta: this.meta})
+                // -----------------------------------
+
                 cb(null, this.result)
               })
             })

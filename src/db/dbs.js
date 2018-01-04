@@ -27,6 +27,7 @@ const db = {
   info: mainDB.sublevel('info'),
   origin2Transcoded: mainDB.sublevel('origin2Transcoded'),
   transcoded2Origin: mainDB.sublevel('transcoded2Origin'),
+  idIndex: mainDB.sublevel('idIndex'),
   owner2Videos: mainDB.sublevel('owner2videos'),
   pubKey2Videos: mainDB.sublevel('pubKey2Videos')
 }

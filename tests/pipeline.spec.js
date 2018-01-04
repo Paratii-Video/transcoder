@@ -166,7 +166,7 @@ describe('# pipeline', function () {
         done()
       })
     })
-  }).timeout(300000)
+  }).timeout(30000)
 })
 
 // non fragged file
