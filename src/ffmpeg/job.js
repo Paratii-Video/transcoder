@@ -22,7 +22,17 @@ const config = {
 // var ipfs = ipfsAPI(config.IPFS_API)
 ffmpeg.setFfprobePath(config.FFPROBE_PATH)
 
+/**
+ * Job is core transcoder part. it handles FFMPEG for a single job.
+ * @class Job
+ * @extends EventEmitter
+ */
 class Job extends EventEmitter {
+  /**
+   * Job's constructor
+   * @param  {Object} opts initializing params.
+   * @return {Job}      returns job instance
+   */
   constructor (opts) {
     super()
     this.id = this._generateId()
@@ -36,12 +46,23 @@ class Job extends EventEmitter {
     db.addId(this.id, this.hash)
   }
 
+  /**
+   * generates a UUID Random Id
+   * @return {String} UUID
+   */
   _generateId () {
     // only generate the id once.
     if (this.id) { return this.id }
     return uuid.v4()
   }
 
+  /**
+   * generate video screenshots / thumbnails
+   * @param  {String}   inputPath    path to video m3u8 master playlist
+   * @param  {String}   outputFolder path to where you wanna store the thumbnails
+   * @param  {Function} callback     (err, generatedFiles)
+   * @return {Array}                an array of filenames for the generated screenshots.
+   */
   generateScreenshots (inputPath, outputFolder, callback) {
     let outputedFileNames = null
     ffmpeg(inputPath)
@@ -60,6 +81,11 @@ class Job extends EventEmitter {
       })
   }
 
+  /**
+   * generate the master manifest for the transcoded video.
+   * @param  {Function} cb (err, manifest)
+   * @return {String}      generated Manifest string.
+   */
   generateManifest (cb) {
     let master = '#EXTM3U\n'
     master += '#EXT-X-VERSION:6\n'
@@ -78,6 +104,12 @@ class Job extends EventEmitter {
     cb(null, result)
   }
 
+  /**
+   * probe video to get the metadata. useful to get all sort of info like original
+   * resolution and aspect-ratio and codecs
+   * @param  {Function} cb (err, videoMeta)
+   * @return {Object}      Object with the most important info + possible downsamples
+   */
   getVideoMetadata (cb) {
     let fileStream
 
@@ -124,6 +156,12 @@ class Job extends EventEmitter {
     return e
   }
 
+  /**
+   * the main function where ffmpeg is triggered. it creates a main command then
+   * clones it into various down bitrates.
+   * @param  {Function} cb (err, result)
+   * @return {Object}      returns an object with master hash, path on disk and size.
+   */
   run (cb) {
     let stream
 
@@ -225,6 +263,11 @@ class Job extends EventEmitter {
     })
   }
 
+  /**
+   * the main entry point to start this Job.
+   * @param  {Function} cb (err, result)
+   * @return {Object}      returns whatever it gets from run()
+   */
   start (cb) {
     this.getVideoMetadata((err, meta) => {
       if (err) throw err

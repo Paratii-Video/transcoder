@@ -163,10 +163,31 @@ describe('# pipeline', function () {
       }, (err, status) => {
         if (err) return done(err)
         console.log('video Transcoded ', status)
+        assert.isOk(status)
+        expect(status).to.equal('done')
         done()
       })
     })
   }).timeout(30000)
+
+  it('transcode a normal mp4', (done) => {
+    pipfs.upload(['./tests/fixtures/video.mp4'], (err, hashes) => {
+      if (err) return done(err)
+      assert.isOk(hashes)
+      expect(hashes).to.have.lengthOf(1)
+
+      pipeline.push({
+        hash: hashes[0].hash,
+        priority: 1
+      }, (err, status) => {
+        if (err) return done(err)
+        console.log('video Transcoded ', status)
+        assert.isOk(status)
+        expect(status).to.equal('done')
+        done()
+      })
+    })
+  }).timeout(300000)
 })
 
 // non fragged file
