@@ -128,7 +128,23 @@ class Pipeline extends EventEmitter {
             console.log(`Job ${job.hash} is already queued.`)
             break
           case 'in-progress':
-            console.log(`Job ${job.hash} is currently in progress.`)
+            // Check if it's actually being processed or not.
+            // This happens if the transcoder crashes mid-job.
+            let pipelineStats = this.stats()
+            let actuallyRunning = pipelineStats.ongoing.filter((task) => { return (task.hash === job.hash) })
+            if (actuallyRunning.length > 0) {
+              console.log(`Job ${job.hash} is currently in progress.`)
+            } else {
+              // job isn't running.
+              // remove it from the datastore and call this function again.
+              db.removeStatus(job.hash, (err) => {
+                if (err) {
+                  return callback(err)
+                }
+
+                this.push(job, callback)
+              })
+            }
             break
           case 'finished':
             console.log(`Job ${job.hash} is already finished.`)

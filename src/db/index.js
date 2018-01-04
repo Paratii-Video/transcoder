@@ -30,6 +30,16 @@ const dataOps = {
     db.status.put(originHash, val)
   },
 
+  /**
+   * remove a job status, useful for removing wrong in-progress.
+   * @param  {String}   originHash origin IPFS hash.
+   * @param  {Function} cb         (err)
+   * @return {Object}              error instance if del didn't work.
+   */
+  removeStatus: (originHash, cb) => {
+    db.status.del(originHash, cb)
+  },
+
   // ------------------------[Info Ops]-----------------------------------------
   /**
    * get Info on a hash
