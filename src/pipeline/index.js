@@ -9,6 +9,7 @@ const { priorityQueue } = require('async')
 const { EventEmitter } = require('events')
 const dopts = require('default-options')
 const db = require('../db')
+const Job = require('../ffmpeg/job')
 
 /**
  * The main class for the transcoding pipeline.
@@ -29,6 +30,9 @@ class Pipeline extends EventEmitter {
     this._options = dopts(opts, defaults, {allowUnknown: true})
     this._queue = priorityQueue(this._processJob.bind(this), this._options.concurrency)
     this._queue.drain = this._drained.bind(this)
+
+    this.pipfs = this._options.pipfs
+    this._jobs = {}
   }
 
   /**
@@ -46,15 +50,24 @@ class Pipeline extends EventEmitter {
    * @param  {Function} callback returns transcoder result, trigger next job
    */
   _processJob (job, callback) {
-    // FOR TESTING ONLY
     // 1. update status to 'in-progress'
     // 2. run it.
     db.updateStatus(job.hash, 'in-progress')
     this.emit('job:status', job, 'in-progress')
-    setTimeout(() => {
-      return callback(null, 1)
-    }, 2000)
-    // --------------------------
+    // -------------------------------------------------------------------------
+    // FOR TESTING ONLY
+    // setTimeout(() => {
+    //   return callback(null, 1)
+    // }, 2000)
+    // -------------------------------------------------------------------------
+    this._jobs[job.hash] = new Job(job)
+
+    this._jobs[job.hash].start((err, jobResult) => {
+      if (err) throw err
+      // update job status.
+      console.log('JOB IS OVER, RESULT: ', jobResult)
+      callback(null, 1)
+    })
   }
 
   /**
@@ -90,6 +103,7 @@ class Pipeline extends EventEmitter {
           // 2. push it to queue
           db.updateStatus(job.hash, 'queued')
           this.emit('job:status', job, 'queued')
+          job.pipfs = this.pipfs
           this._queue.push(job, job.priority || 0, (err, result) => {
             if (err) {
               return callback(err)

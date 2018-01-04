@@ -5,11 +5,15 @@
 'use strict'
 
 const { EventEmitter } = require('events')
+const fs = require('fs')
+const path = require('path')
 const Ipfs = require('ipfs')
 const HttpAPI = require('ipfs/src/http/index.js')
 const ParatiiProtocol = require('paratii-protocol')
 const pull = require('pull-stream')
 const pullFile = require('pull-file')
+const { eachSeries, nextTick } = require('async')
+const once = require('once')
 
 const log = require('debug')('paratii:ipfs')
 log.error = require('debug')('paratii:ipfs:error')
@@ -75,11 +79,11 @@ class PIPFS extends EventEmitter {
     let hashes = []
     pull(
       pull.values(files),
-      // pull.through((file) => {
-      //   console.log('Adding ', file)
-      //   fileSize = file.size
-      //   total = 0
-      // }),
+      pull.through((file) => {
+        console.log('Adding ', file)
+        // fileSize = file.size
+        // total = 0
+      }),
       pull.asyncMap((file, cb) => pull(
         pull.values([{
           path: file,
@@ -89,13 +93,13 @@ class PIPFS extends EventEmitter {
             // pull.through((chunk) => updateProgress(chunk.length))
           )
         }]),
-        this.ipfs.files.createAddPullStream({chunkerOptions: {maxChunkSize: 64048}}), // default size 262144
+        this.ipfs.files.addPullStream({chunkerOptions: {maxChunkSize: 64048}}), // default size 262144
         pull.collect((err, res) => {
           if (err) {
             return cb(err)
           }
           const file = res[0]
-          log('Adding %s finished as %s', file.path, file.hash)
+          console.log('Adding %s finished as %s', file.path, file.hash)
           hashes.push(file)
 
           cb(null, file)
@@ -110,6 +114,62 @@ class PIPFS extends EventEmitter {
         // }
       })
     )
+  }
+
+  addDirToIPFS (dirPath, cb) {
+    cb = once(cb)
+    let resp = null
+    this.ipfs.files.createAddStream((err, addStream) => {
+      if (err) return cb(err)
+      addStream.on('data', (file) => {
+        console.log('dirPath ', dirPath)
+        console.log('file Added ', file)
+        if ('/' + file.path === dirPath) {
+          console.log('this is the hash to return ')
+          resp = file
+          nextTick(() => cb(null, resp))
+        }
+      })
+
+      addStream.on('end', () => {
+        console.log('addStream ended')
+        // nextTick(() => cb(null, resp))
+      })
+
+      fs.readdir(dirPath, (err, files) => {
+        if (err) return cb(err)
+        eachSeries(files, (file, next) => {
+          next = once(next)
+          try {
+            console.log('reading file ', file)
+            let rStream = fs.createReadStream(path.join(dirPath, file))
+            rStream.on('error', (err) => {
+              if (err) {
+                log('rStream Error ', err)
+                return next()
+              }
+            })
+            if (rStream) {
+              addStream.write({
+                path: path.join(dirPath, file),
+                content: rStream
+              })
+            }
+          } catch (e) {
+            if (e) {
+              console.log('gotcha ', e)
+            }
+          } finally {
+          }
+          // next()
+          nextTick(() => next())
+        }, (err) => {
+          if (err) return cb(err)
+          // addStream.destroy()
+          addStream.end()
+        })
+      })
+    })
   }
 }
 
