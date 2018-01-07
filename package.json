@@ -1,19 +1,25 @@
 {
   "name": "transcoder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "src/node.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha tests/*.spec.js --exit",
+    "start": "NODE_ENV=production node src/boot.js",
+    "dev": "NODE_ENV=development node src/boot.js"
   },
-  "author": "Yahya - Paratii.video",
-  "license": "ISC",
+  "author": "Yahya - Paratii.video <ya7yaz@gmail.com>",
+  "license": "GPL-3.0",
   "dependencies": {
     "async": "^2.5.0",
+    "compression": "^1.7.1",
+    "default-options": "^1.0.0",
+    "express": "^4.16.2",
     "ffmpeg-stream": "^0.5.0",
     "fluent-ffmpeg": "^2.1.2",
-    "ipfs": "github:ya7ya/js-ipfs#paratii/master",
+    "ipfs": "github:paratii-video/js-ipfs#paratii/v0.27.1",
     "ipfs-api": "^14.3.5",
+    "level-sublevel": "^6.6.1",
     "leveldown": "^2.0.0",
     "levelup": "^2.0.0",
     "lodash": "^4.17.4",
@@ -24,8 +30,15 @@
     "pull-stream": "^3.6.1",
     "pull-stream-to-stream": "^1.3.4",
     "tar-stream": "^1.5.4",
+    "uuid": "^3.1.0",
     "vimeo-downloader": "^1.0.3",
     "xlsx": "^0.11.7",
     "ytdl-core": "^0.18.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "dirty-chai": "^2.0.1",
+    "mocha": "^4.0.1",
+    "request": "^2.83.0"
   }
 }
