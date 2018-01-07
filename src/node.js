@@ -101,6 +101,10 @@ class PublisherNode extends EventEmitter {
       })
     })
   }
+
+  stop (callback) {
+    this.ipfs.ipfs.stop(callback)
+  }
 }
 
 module.exports = PublisherNode

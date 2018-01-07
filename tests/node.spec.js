@@ -54,4 +54,10 @@ describe('# Publisher Node', function () {
       done()
     })
   })
+
+  after((done) => {
+    node.stop(() => {
+      done()
+    })
+  })
 })
