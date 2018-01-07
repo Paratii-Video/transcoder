@@ -9,14 +9,15 @@ module.exports = (node) => {
 
   router.get('/stats', (req, res, next) => {
     // TODO
+    res.json({Message: 'Not implemented yet', code: 0})
   })
 
   router.get('/job/:id', (req, res, next) => {
-
+    res.json({Message: 'Not implemented yet', code: 0})
   })
 
   router.post('/transcode', (req, res, next) => {
-
+    res.json({Message: 'Not implemented yet', code: 0})
   })
 
   node.api.use('/api/v1', router)

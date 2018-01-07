@@ -1,13 +1,15 @@
 {
   "name": "transcoder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "src/node.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha tests/*.spec.js --exit",
+    "start": "NODE_ENV=production node src/boot.js",
+    "dev": "NODE_ENV=development node src/boot.js"
   },
-  "author": "Yahya - Paratii.video",
-  "license": "ISC",
+  "author": "Yahya - Paratii.video <ya7yaz@gmail.com>",
+  "license": "GPL-3.0",
   "dependencies": {
     "async": "^2.5.0",
     "compression": "^1.7.1",
