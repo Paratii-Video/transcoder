@@ -10,6 +10,12 @@ const apiRoutes = require('./api/v1')
 const Pipeline = require('./pipeline')
 
 class PublisherNode extends EventEmitter {
+  /**
+   * Publisher Node is the main entry point. it initiates Paratii-IPFS, the
+   * transcoding pipeline and REST API for the node.
+   * @param  {Object} opts check defaults.
+   * @return {PublisherNode}      returns a PublisherNode instance.
+   */
   constructor (opts) {
     super()
 
@@ -81,6 +87,9 @@ class PublisherNode extends EventEmitter {
     })
   }
 
+  /**
+   * hooks up event handlers for transcoding and IPFS API
+   */
   _onPIPFSReady () {
     // start the IPFS gateway
     this.ipfs.startAPI(() => {
@@ -102,6 +111,11 @@ class PublisherNode extends EventEmitter {
     })
   }
 
+  /**
+   * stop the PublisherNode, mainly to stop ipfs
+   * @param  {Function} callback (err)
+   * @return {Object}            returns error Object.
+   */
   stop (callback) {
     this.ipfs.ipfs.stop(callback)
   }
