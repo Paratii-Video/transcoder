@@ -6,7 +6,7 @@ const compression = require('compression')
 const dopts = require('default-options')
 const PIPFS = require('./pipfs')
 const apiRoutes = require('./api/v1')
-// const db = require('./db')
+const db = require('./db')
 const Pipeline = require('./pipeline')
 
 class PublisherNode extends EventEmitter {
@@ -64,7 +64,7 @@ class PublisherNode extends EventEmitter {
     }
 
     this._options = dopts(opts, defaults, {allowUnknown: true})
-
+    this.db = db
     // Publisher Node api
     this.api = express()
     this.api.use(compression())

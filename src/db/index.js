@@ -56,7 +56,13 @@ const dataOps = {
   getInfo: (hash, callback) => {
     db.info.get(hash, (err, infoStr) => {
       if (err) return callback(err)
-      return callback(null, JSON.parse(infoStr))
+      let infoObj = {}
+      try {
+        infoObj = JSON.parse(infoStr)
+      } catch (e) {
+        console.log('JSON PARSE ERROR ', infoStr)
+      }
+      return callback(null, infoObj)
     })
   },
 
