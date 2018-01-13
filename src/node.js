@@ -29,7 +29,8 @@ class PublisherNode extends EventEmitter {
           'Addresses': {
             'Swarm': [
               '/ip4/0.0.0.0/tcp/4002',
-              '/ip4/127.0.0.1/tcp/4003/ws'
+              '/ip4/127.0.0.1/tcp/4003/ws',
+              '/dns4/ws.star.paratii.video/tcp/443/wss/p2p-websocket-star'
             ],
             'API': '/ip4/127.0.0.1/tcp/5002',
             'Gateway': '/ip4/127.0.0.1/tcp/9090'
