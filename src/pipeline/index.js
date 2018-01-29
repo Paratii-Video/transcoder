@@ -62,10 +62,65 @@ class Pipeline extends EventEmitter {
     // -------------------------------------------------------------------------
     this._jobs[job.hash] = new Job(job)
 
+    // paratii-protocol signal to client that job started.
+    if (this._jobs[job.hash].peerId) {
+      let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:started',
+        { hash: this.hash,
+          author: this._jobs[job.hash].peerId.id
+        })
+      this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+        if (err) throw err
+        console.log('paratii protocol msg sent: ', job.hash)
+      })
+    }
+
+    // paratii-protocol signal to client that downsample is ready.
+    this._jobs[job.hash].on('downsample:ready', (hash, size) => {
+      if (this._jobs[job.hash].peerId) {
+        let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:downsample:ready',
+          { hash: hash,
+            author: this._jobs[job.hash].peerId.id,
+            size: size
+          })
+        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+          if (err) throw err
+          console.log('paratii protocol msg sent: ', job.hash)
+        })
+      }
+    })
+
+    // paratii-protocol signal to client the progress of a job.
+    this._jobs[job.hash].on('progress', (hash, size, percent) => {
+      if (this._jobs[job.hash].peerId) {
+        let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:progress',
+          { hash: hash,
+            author: this._jobs[job.hash].peerId.id,
+            size: size,
+            percent: percent
+          })
+        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+          if (err) throw err
+          console.log('paratii protocol msg sent: ', job.hash)
+        })
+      }
+    })
+
     this._jobs[job.hash].start((err, jobResult) => {
       if (err) throw err
       // update job status.
       console.log('JOB IS OVER, RESULT: ', jobResult)
+      // signal paratii-protocol to client that job is done.
+      if (this._jobs[job.hash].peerId) {
+        let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:done',
+          { hash: job.hash,
+            author: this._jobs[job.hash].peerId.id,
+            result: JSON.stringify(jobResult)
+          })
+        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+          if (err) throw err
+          console.log('paratii protocol msg sent: ', job.hash)
+        })
+      }
       callback(null, 1)
     })
   }

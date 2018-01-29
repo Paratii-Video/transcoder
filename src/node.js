@@ -21,6 +21,11 @@ class PublisherNode extends EventEmitter {
 
     let defaults = {
       ipfs: {
+        EXPERIMENTAL: { // enable experimental features
+          pubsub: true,
+          sharding: true, // enable dir sharding
+          dht: true // enable KadDHT, currently not interopable with go-ipfs
+        },
         bitswap: {
           maxMessageSize: 32 * 1024
         },
@@ -110,6 +115,11 @@ class PublisherNode extends EventEmitter {
         hash: args.hash
       })
     })
+
+    // this.ipfs.on('transcoding:progress', (peerId, command) => {
+    //   // let args = JSON.parse(command.args.toString())
+    //   console.log('transcoding progress:::: ', command.payload.toString(), '\n', command.args.toString())
+    // })
   }
 
   /**

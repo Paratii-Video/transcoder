@@ -38,7 +38,7 @@ class Job extends EventEmitter {
     this.id = this._generateId()
     // TODO have a choice of a different folder instead of tmp
     this.rootPath = path.join(os.tmpdir(), 'paratii-' + this.id)
-
+    this.peerId = opts.peerId
     this.hash = opts.hash
     this.pipfs = opts.pipfs
     this.meta = {}
@@ -213,6 +213,7 @@ class Job extends EventEmitter {
         })
         .on('end', () => {
           console.log(this.id, ':', size, '\t DONE')
+          this.emit('downsample:ready', this.hash, size)
           next(null)
         })
         .on('error', (err) => {
@@ -220,8 +221,9 @@ class Job extends EventEmitter {
           return next(err)
         })
         .on('progress', (progress) => {
-          console.log(this.id, ':', size, '\t',
-            tutils.getProgressPercent(progress.timemark, this.codecData.duration).toFixed(2))
+          let percent = tutils.getProgressPercent(progress.timemark, this.codecData.duration).toFixed(2)
+          console.log(this.id, ':', size, '\t', percent)
+          this.emit('progress', this.hash, size, percent)
         })
         .save(this.rootPath + '/' + String(size.split('x')[1]) + '.m3u8')
         .run()
