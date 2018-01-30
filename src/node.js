@@ -21,6 +21,11 @@ class PublisherNode extends EventEmitter {
 
     let defaults = {
       ipfs: {
+        EXPERIMENTAL: { // enable experimental features
+          pubsub: false,
+          sharding: true, // enable dir sharding
+          dht: true // enable KadDHT, currently not interopable with go-ipfs
+        },
         bitswap: {
           maxMessageSize: 32 * 1024
         },
@@ -29,7 +34,8 @@ class PublisherNode extends EventEmitter {
           'Addresses': {
             'Swarm': [
               '/ip4/0.0.0.0/tcp/4002',
-              '/ip4/127.0.0.1/tcp/4003/ws',
+              '/ip4/127.0.0.1/tcp/4003/wss',
+              '/ip4/0.0.0.0/tcp/4003/ws',
               '/dns4/ws.star.paratii.video/tcp/443/wss/p2p-websocket-star'
             ],
             'API': '/ip4/127.0.0.1/tcp/5002',
@@ -76,6 +82,7 @@ class PublisherNode extends EventEmitter {
     // -------------------------------
     // PIPFS & Pipeline.
     this.ipfs = new PIPFS(this._options.ipfs)
+    this._options.pipeline.pipfs = this.ipfs
     this.pipeline = new Pipeline(this._options.pipeline)
 
     // PIPFS events.
@@ -110,6 +117,11 @@ class PublisherNode extends EventEmitter {
         hash: args.hash
       })
     })
+
+    // this.ipfs.on('transcoding:progress', (peerId, command) => {
+    //   // let args = JSON.parse(command.args.toString())
+    //   console.log('transcoding progress:::: ', command.payload.toString(), '\n', command.args.toString())
+    // })
   }
 
   /**

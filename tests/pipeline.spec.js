@@ -108,6 +108,11 @@ describe('# pipeline', function () {
   let pipeline, pipfs
   before((done) => {
     pipfs = new PIPFS({
+      EXPERIMENTAL: { // enable experimental features
+        pubsub: true,
+        sharding: true, // enable dir sharding
+        dht: true // enable KadDHT, currently not interopable with go-ipfs
+      },
       bitswap: {
         maxMessageSize: 32 * 1024
       },
@@ -156,7 +161,6 @@ describe('# pipeline', function () {
       if (err) return done(err)
       assert.isOk(hashes)
       expect(hashes).to.have.lengthOf(1)
-
       pipeline.push({
         hash: hashes[0].hash,
         priority: 1
