@@ -69,7 +69,7 @@ class Pipeline extends EventEmitter {
           author: this._jobs[job.hash].peerId.id
         })
       this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-        if (err) throw err
+        if (err) return console.log('err: ', err)
         console.log('paratii protocol msg sent: ', job.hash)
       })
     }
@@ -83,7 +83,7 @@ class Pipeline extends EventEmitter {
             size: size
           })
         this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-          if (err) throw err
+          if (err) return console.log('err: ', err)
           console.log('paratii protocol msg sent: ', job.hash)
         })
       }
@@ -99,14 +99,14 @@ class Pipeline extends EventEmitter {
             percent: percent
           })
         this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-          if (err) throw err
+          if (err) return console.log('err: ', err)
           console.log('paratii protocol msg sent: ', job.hash)
         })
       }
     })
 
     this._jobs[job.hash].start((err, jobResult) => {
-      if (err) throw err
+      if (err) return console.log('err: ', err)
       // update job status.
       console.log('JOB IS OVER, RESULT: ', jobResult)
       // signal paratii-protocol to client that job is done.
@@ -117,7 +117,7 @@ class Pipeline extends EventEmitter {
             result: JSON.stringify(jobResult)
           })
         this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-          if (err) throw err
+          if (err) return console.log('err: ', err)
           console.log('paratii protocol msg sent: ', job.hash)
         })
       }
