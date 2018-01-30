@@ -253,6 +253,7 @@ class Job extends EventEmitter {
                 db.addTranscodedHash(this.id, this.result.master.hash)
                 db.updateHashIndex(this.hash, this.result.master.hash)
                 db.updateInfo(this.id, {result: this.result, meta: this.meta})
+                db.updateInfo(this.hash, {result: this.result, meta: this.meta})
                 // -----------------------------------
 
                 cb(null, this.result)

@@ -33,6 +33,7 @@ class Pipeline extends EventEmitter {
 
     this.pipfs = this._options.pipfs
     this._jobs = {}
+    this._lastUpdate = {}
   }
 
   /**
@@ -72,6 +73,7 @@ class Pipeline extends EventEmitter {
         if (err) return console.log('err: ', err)
         console.log('paratii protocol msg sent: ', job.hash)
       })
+      this._lastUpdate[job.hash] = new Date()
     }
 
     // paratii-protocol signal to client that downsample is ready.
@@ -91,7 +93,7 @@ class Pipeline extends EventEmitter {
 
     // paratii-protocol signal to client the progress of a job.
     this._jobs[job.hash].on('progress', (hash, size, percent) => {
-      if (this._jobs[job.hash].peerId) {
+      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 5)) {
         let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:progress',
           { hash: hash,
             author: this._jobs[job.hash].peerId.id,
@@ -102,6 +104,8 @@ class Pipeline extends EventEmitter {
           if (err) return console.log('err: ', err)
           console.log('paratii protocol msg sent: ', job.hash)
         })
+
+        this._lastUpdate[job.hash] = new Date()
       }
     })
 
@@ -205,6 +209,30 @@ class Pipeline extends EventEmitter {
             break
           case 'finished':
             console.log(`Job ${job.hash} is already finished.`)
+            db.getInfo(job.hash, (err, result) => {
+              if (err) {
+                if (err.type === 'NotFoundError') {
+                  // how can status equal finished but no metadata available.
+                  console.log('ERROR NOT FOUND::: ', err)
+                }
+              } else {
+                // TODO
+                // Send msg to client with metadata.
+                // remove this job from queue.
+                // signal paratii-protocol to client that job is done.
+                if (job.peerId) {
+                  let msg = this.pipfs.protocol.createCommand('transcoding:done',
+                    { hash: job.hash,
+                      author: job.peerId.id,
+                      result: JSON.stringify(result)
+                    })
+                  this.pipfs.protocol.network.sendMessage(this.peerId, msg, (err) => {
+                    if (err) return console.log('err: ', err)
+                    console.log('paratii protocol msg sent: ', job.hash)
+                  })
+                }
+              }
+            })
             break
           default:
             console.log(`Job ${job.hash} is unknown ${status}`)
