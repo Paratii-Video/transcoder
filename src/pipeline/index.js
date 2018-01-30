@@ -226,7 +226,7 @@ class Pipeline extends EventEmitter {
                       author: job.peerId.id,
                       result: JSON.stringify(result)
                     })
-                  this.pipfs.protocol.network.sendMessage(this.peerId, msg, (err) => {
+                  this.pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
                     if (err) return console.log('err: ', err)
                     console.log('paratii protocol msg sent: ', job.hash)
                   })
