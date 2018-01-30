@@ -22,7 +22,7 @@ class PublisherNode extends EventEmitter {
     let defaults = {
       ipfs: {
         EXPERIMENTAL: { // enable experimental features
-          pubsub: true,
+          pubsub: false,
           sharding: true, // enable dir sharding
           dht: true // enable KadDHT, currently not interopable with go-ipfs
         },
@@ -35,6 +35,7 @@ class PublisherNode extends EventEmitter {
             'Swarm': [
               '/ip4/0.0.0.0/tcp/4002',
               '/ip4/127.0.0.1/tcp/4003/wss',
+              '/ip4/0.0.0.0/tcp/4003/ws',
               '/dns4/ws.star.paratii.video/tcp/443/wss/p2p-websocket-star'
             ],
             'API': '/ip4/127.0.0.1/tcp/5002',

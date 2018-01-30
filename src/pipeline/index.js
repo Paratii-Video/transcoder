@@ -10,7 +10,7 @@ const { EventEmitter } = require('events')
 const dopts = require('default-options')
 const db = require('../db')
 const Job = require('../ffmpeg/job')
-
+const noop = function () { }
 /**
  * The main class for the transcoding pipeline.
  * @extends EventEmitter
@@ -145,6 +145,8 @@ class Pipeline extends EventEmitter {
     if (!job) {
       return callback(new Error('[pipeline] job is required job: ' + job))
     }
+
+    callback = callback || noop
 
     // Logic:
     // 1. check if the <Hash> is already been transcoded or being transcoded.
