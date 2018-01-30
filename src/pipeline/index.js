@@ -224,7 +224,7 @@ class Pipeline extends EventEmitter {
                   let msg = this.pipfs.protocol.createCommand('transcoding:done',
                     { hash: job.hash,
                       author: job.peerId.id,
-                      result: JSON.stringify(result)
+                      result: JSON.stringify(result.result)
                     })
                   this.pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
                     if (err) return console.log('err: ', err)
