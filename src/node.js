@@ -82,6 +82,7 @@ class PublisherNode extends EventEmitter {
     // -------------------------------
     // PIPFS & Pipeline.
     this.ipfs = new PIPFS(this._options.ipfs)
+    this._options.pipeline.pipfs = this.ipfs
     this.pipeline = new Pipeline(this._options.pipeline)
 
     // PIPFS events.
