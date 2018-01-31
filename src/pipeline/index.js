@@ -88,6 +88,13 @@ class Pipeline extends EventEmitter {
             if (err) return console.log('err: ', err)
             console.log('paratii protocol msg sent: ', job.hash)
           })
+
+          // remove it from in-progress
+          db.removeStatus(job.hash, (e) => {
+            if (e) {
+              console.log('DB removeStatus Error: ', e)
+            }
+          })
         }
 
         console.log('JOB ERROR ', err)
