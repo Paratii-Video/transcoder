@@ -223,9 +223,6 @@ class Pipeline extends EventEmitter {
         switch (status) {
           case 'queued':
             console.log(`Job ${job.hash} is already queued.`)
-            let pipelineStats = this.stats()
-            let actuallyRunning = pipelineStats.ongoing.filter((task) => { return (task.hash === job.hash) })
-
             break
           case 'in-progress':
             // Check if it's actually being processed or not.
