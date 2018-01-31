@@ -149,6 +149,17 @@ class Pipeline extends EventEmitter {
           if (err) return console.log('err: ', err)
           console.log('paratii protocol msg sent: ', job.hash)
         })
+
+        // FOR TESTING
+        // delete the file if it's used for testing.
+        // QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ
+        if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+          db.removeStatus(job.hash, (e) => {
+            if (e) {
+              console.log('DB removeStatus Error: ', e)
+            }
+          })
+        }
       }
       callback(null, 1)
     })
