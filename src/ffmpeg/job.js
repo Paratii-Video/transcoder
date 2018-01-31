@@ -218,6 +218,7 @@ class Job extends EventEmitter {
         })
         .on('error', (err) => {
           console.log('error: ', this.id, ':', size, '\t', err)
+          this.emit('error', err, this.hash)
           return next(err)
         })
         .on('progress', (progress) => {
@@ -273,7 +274,7 @@ class Job extends EventEmitter {
    */
   start (cb) {
     this.getVideoMetadata((err, meta) => {
-      if (err) throw err
+      if (err) return this.emit('error', err, this.hash)
       this.run(cb)
     })
   }

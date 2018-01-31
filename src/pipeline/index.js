@@ -76,6 +76,24 @@ class Pipeline extends EventEmitter {
       this._lastUpdate[job.hash] = new Date()
     }
 
+    this._jobs[job.hash].on('error', (err, hash) => {
+      if (err) {
+        if (this._jobs[job.hash].peerId) {
+          let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:error',
+            { hash: hash,
+              author: this._jobs[job.hash].peerId.id,
+              err: err
+            })
+          this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', job.hash)
+          })
+        }
+
+        console.log('JOB ERROR ', err)
+      }
+    })
+
     // paratii-protocol signal to client that downsample is ready.
     this._jobs[job.hash].on('downsample:ready', (hash, size) => {
       if (this._jobs[job.hash].peerId) {
