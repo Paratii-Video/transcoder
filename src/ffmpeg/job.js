@@ -121,7 +121,7 @@ class Job extends EventEmitter {
     }
 
     fileStream.unpipe = function () { }
-    ffmpeg(fileStream.resume())
+    ffmpeg(fileStream)
       .ffprobe(0, (err, metadata) => {
         if (err) return cb(this._handleError(err))
         // Ref: metadata object example https://github.com/fluent-ffmpeg/node-fluent-ffmpeg#reading-video-metadata
