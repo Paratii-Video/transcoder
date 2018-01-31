@@ -59,7 +59,9 @@ class PIPFS extends EventEmitter {
       })
 
       this.ipfs.on('error', (err) => {
-        if (err) throw err
+        if (err) {
+          console.log('IPFS ERROR: ', err)
+        }
       })
     })
   }
@@ -73,7 +75,7 @@ class PIPFS extends EventEmitter {
         log('please run: jsipfs init')
       }
       if (err) {
-        throw err
+        console.log('httpAPI Error: ', err)
       }
       log('Daemon is ready')
       cb()
@@ -111,7 +113,7 @@ class PIPFS extends EventEmitter {
         }))),
       pull.collect((err, files) => {
         if (err) {
-          throw err
+          console.log('IPFS UPLOAD ERROR: ', err)
         }
         log('uploaded To IPFS ', files)
         callback(null, hashes)
