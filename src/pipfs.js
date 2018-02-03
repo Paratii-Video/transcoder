@@ -6,6 +6,7 @@
 
 const { EventEmitter } = require('events')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 const Ipfs = require('ipfs')
 const HttpAPI = require('ipfs/src/http/index.js')
@@ -121,6 +122,21 @@ class PIPFS extends EventEmitter {
         // }
       })
     )
+  }
+
+  grabFile (hash, cb) {
+    let stream = this.ipfs.files.catReadableStream(hash)
+    let fileStream = fs.createWriteStream(this.rootPath = path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+    stream.pipe(fileStream)
+    stream.on('error', (err) => {
+      if (err) return cb(err)
+    })
+    stream.on('end', () => {
+      fileStream.close() // don't forget to close that stream.
+      setTimeout(() => {
+        cb()
+      }, 1)
+    })
   }
 
   addDirToIPFS (dirPath, cb) {

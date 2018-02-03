@@ -200,6 +200,19 @@ class Pipeline extends EventEmitter {
           db.updateStatus(job.hash, 'queued')
           this.emit('job:status', job, 'queued')
           job.pipfs = this.pipfs
+          // grab file first from IPFS
+          // this is useful so we can let the client close his/her window without
+          // having to wait for ffmpeg.
+          this.pipfs.grabFile(job.hash, (err) => {
+            if (err) {
+              console.error('grabfile ERROR : ', err)
+            } else {
+              // TODO
+              // send user notification that he/she can close that window.
+              console.log('file %s grabbed successfully', job.hash)
+            }
+          })
+
           this._queue.push(job, job.priority || 0, (err, result) => {
             if (err) {
               return callback(err)
