@@ -34,6 +34,24 @@ class Pipeline extends EventEmitter {
     this.pipfs = this._options.pipfs
     this._jobs = {}
     this._lastUpdate = {}
+
+    this.pipfs.on('progress', (hash, chunkSize) => {
+      if (this._jobs[hash] && this._jobs[hash].peerId && ((new Date() - this._lastUpdate[hash]) / 1000 > 5)) {
+        // TODO calculate percent. send it to the client. store it here if
+        // client isn't available
+        let msg = this._jobs[hash].pipfs.protocol.createCommand('uploader:progress',
+          { hash: hash,
+            author: this._jobs[hash].peerId.id,
+            chunkSize: chunkSize
+          })
+        this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
+          if (err) return console.log('err: ', err)
+          console.log('paratii protocol msg sent: ', hash)
+        })
+
+        this._lastUpdate[hash] = new Date()
+      }
+    })
   }
 
   /**

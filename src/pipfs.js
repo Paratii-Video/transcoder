@@ -127,7 +127,6 @@ class PIPFS extends EventEmitter {
   grabFile (hash, cb) {
     let stream = this.ipfs.files.catReadableStream(hash)
     let fileStream = fs.createWriteStream(this.rootPath = path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
-    stream.pipe(fileStream)
     stream.on('error', (err) => {
       if (err) return cb(err)
     })
@@ -137,6 +136,11 @@ class PIPFS extends EventEmitter {
         cb()
       }, 1)
     })
+    stream.on('data', (data) => {
+      // report progress
+      this.emit('progress', hash, data.length)
+    })
+    stream.pipe(fileStream)
   }
 
   addDirToIPFS (dirPath, cb) {
