@@ -52,8 +52,6 @@ class Pipeline extends EventEmitter {
           if (err) return console.log('err: ', err)
           console.log('paratii protocol msg sent: ', hash)
         })
-
-        this._lastUploaderUpdate[hash] = new Date()
       }
     })
   }
