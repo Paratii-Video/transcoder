@@ -73,7 +73,15 @@ class Job extends EventEmitter {
       })
       .on('end', () => {
         console.log('screenshots generated!')
-        callback(null, outputedFileNames)
+        setTimeout(() => {
+          callback(null, outputedFileNames)
+        }, 10)
+      })
+      .on('error', (err) => {
+        if (err) {
+          console.log('generateScreenshots ERROR : ', err)
+          callback(err)
+        }
       })
       .screenshots({
         count: 4,
@@ -90,7 +98,7 @@ class Job extends EventEmitter {
   generateManifest (cb) {
     let master = '#EXTM3U\n'
     master += '#EXT-X-VERSION:6\n'
-
+    console.log('codecData: ', this.codecData)
     let resolutionLine = (size) => {
       return `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${tutils.getBandwidth(tutils.getHeight(size))},CODECS="avc1.4d001f,mp4a.40.2",RESOLUTION=${tutils.calculateWidth(this.codecData, tutils.getHeight(size))},NAME=${tutils.getHeight(size)}\n`
     }
