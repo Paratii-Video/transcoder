@@ -77,6 +77,12 @@ class Job extends EventEmitter {
           callback(null, outputedFileNames)
         }, 10)
       })
+      .on('error', (err) => {
+        if (err) {
+          console.log('generateScreenshots ERROR : ', err)
+          callback(err)
+        }
+      })
       .screenshots({
         count: 4,
         folder: outputFolder,
