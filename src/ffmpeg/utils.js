@@ -102,6 +102,7 @@ module.exports = {
     let res = codecData.video_details.filter((str) => { return (resString.test(str)) })
     if (res && res.length > 0) {
       res = res[0]
+      res = res.split('x')
     } else {
       return null
     }
