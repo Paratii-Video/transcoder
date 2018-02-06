@@ -97,7 +97,14 @@ module.exports = {
    *   }
    */
   calculateWidth: function (codecData, currentHeight) {
-    let res = codecData.video_details[3].split('x')
+    let resString = /^\d{3,}x\d{3,}$/g // test
+    // test all video_details against resString
+    let res = codecData.video_details.filter((str) => { return (resString.test(str)) })
+    if (res && res.length > 0) {
+      res = res[0]
+    } else {
+      return null
+    }
     let width = parseInt(res[0])
     let height = parseInt(res[1])
 
