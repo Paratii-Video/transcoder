@@ -34,17 +34,19 @@ class Pipeline extends EventEmitter {
     this.pipfs = this._options.pipfs
     this._jobs = {}
     this._lastUpdate = {}
-    this._lastUploaderUpdate = {}
+    this._uploaderProgress = {}
 
     this.pipfs.on('progress', (hash, chunkSize) => {
-      if (this._jobs[hash] && this._jobs[hash].peerId && ((new Date() - this._lastUploaderUpdate[hash]) / 1000 > 5)) {
+      if (this._jobs[hash] && this._jobs[hash].peerId) {
         // TODO calculate percent. send it to the client. store it here if
         // client isn't available
+        this._uploaderProgress[hash] = this._uploaderProgress[hash] || 0
+        this._uploaderProgress[hash] += chunkSize
         let msg = this._jobs[hash].pipfs.protocol.createCommand('uploader:progress',
           { hash: hash,
             author: this._jobs[hash].peerId.id,
             chunkSize: chunkSize,
-            percent: (chunkSize / this._jobs[hash].size) * 100
+            percent: (this._uploaderProgress[hash] / this._jobs[hash].size) * 100
           })
         this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
           if (err) return console.log('err: ', err)
