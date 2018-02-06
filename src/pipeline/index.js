@@ -42,7 +42,8 @@ class Pipeline extends EventEmitter {
         let msg = this._jobs[hash].pipfs.protocol.createCommand('uploader:progress',
           { hash: hash,
             author: this._jobs[hash].peerId.id,
-            chunkSize: chunkSize
+            chunkSize: chunkSize,
+            percent: (chunkSize / this._jobs[hash].size) * 100
           })
         this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
           if (err) return console.log('err: ', err)

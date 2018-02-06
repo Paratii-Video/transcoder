@@ -114,7 +114,8 @@ class PublisherNode extends EventEmitter {
         peerId: peerId,
         priority: 1,
         pipfs: this.ipfs,
-        hash: args.hash
+        hash: args.hash,
+        size: args.size
       })
     })
 

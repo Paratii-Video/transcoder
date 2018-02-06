@@ -41,6 +41,7 @@ class Job extends EventEmitter {
     this.peerId = opts.peerId
     this.hash = opts.hash
     this.pipfs = opts.pipfs
+    this.size = opts.size
     this.meta = {}
     // add the Id to the db
     db.addId(this.id, this.hash)
