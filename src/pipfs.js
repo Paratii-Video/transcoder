@@ -48,7 +48,7 @@ class PIPFS extends EventEmitter {
         // })
 
         this.protocol.notifications.on('command', (peerId, command) => {
-          log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
+          log('got command from ', peerId.toB58String(), ' | command: ', command)
           let commandStr = command.payload.toString()
           switch (commandStr) {
             case 'transcode':
