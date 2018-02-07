@@ -129,12 +129,14 @@ class PublisherNode extends EventEmitter {
             { hash: args.hash,
               err: JSON.stringify(err)
             })
+          console.log('sending pin:error ', msg)
           this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
             if (err) return console.log('err: ', err)
             console.log('paratii protocol msg sent: ', args.hash)
           })
         } else {
           let msg = this.ipfs.protocol.createCommand('pin:done', { hash: args.hash })
+          console.log('sending pin:done ', msg)
           this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
             if (err) return console.log('err: ', err)
             console.log('paratii protocol msg sent: ', args.hash)
