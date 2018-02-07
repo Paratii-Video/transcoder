@@ -42,9 +42,24 @@ class PIPFS extends EventEmitter {
           console.log('[paratii-protocol] ', peerId.toB58String(), ' new Msg: ', msg)
         })
 
-        this.protocol.notifications.on('command:transcode', (peerId, command) => {
+        // this.protocol.notifications.on('command:transcode', (peerId, command) => {
+        //   log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
+        //   this.emit('transcode', peerId, command)
+        // })
+
+        this.protocol.notifications.on('command', (peerId, command) => {
           log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
-          this.emit('transcode', peerId, command)
+          let commandStr = command.payload.toString()
+          switch (commandStr) {
+            case 'transcode':
+              this.emit('transcode', peerId, command)
+              break
+            case 'pin':
+              this.emit('pin', peerId, command)
+              break
+            default:
+              console.log('received command : ', commandStr)
+          }
         })
 
         // this.protocol.notifications.on('command:transcode', (peerId, command) => {
@@ -126,7 +141,7 @@ class PIPFS extends EventEmitter {
 
   grabFile (hash, cb) {
     let stream = this.ipfs.files.catReadableStream(hash)
-    let fileStream = fs.createWriteStream(this.rootPath = path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+    let fileStream = fs.createWriteStream(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
     stream.on('error', (err) => {
       if (err) return cb(err)
     })
