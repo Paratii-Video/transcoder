@@ -162,6 +162,17 @@ class PIPFS extends EventEmitter {
     // stream.pipe(fileStream)
   }
 
+  // TODO this isn't actually pinning.
+  pinJSON (hash, cb) {
+    this.ipfs.object.get(hash).then((node) => {
+      if (node) {
+        cb(null, JSON.parse(node.toJSON().data))
+      }
+    }).catch((err) => {
+      if (err) return cb(err)
+    })
+  }
+
   addDirToIPFS (dirPath, cb) {
     cb = once(cb)
     let resp = null

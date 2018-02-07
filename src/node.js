@@ -122,25 +122,24 @@ class PublisherNode extends EventEmitter {
     this.ipfs.on('pin', (peerId, command) => {
       console.log('Got pinning command ', command.payload.toString(), '\n', command.args.toString())
       let args = JSON.parse(command.args.toString())
-
-      this.ipfs.grabFile(args.hash, (err) => {
+      this.ipfs.pinJSON(args.hash, (err) => {
         if (err) {
-          // let msg = this.ipfs.protocol.createCommand('pin:error',
-          //   { hash: args.hash,
-          //     err: JSON.stringify(err)
-          //   })
-          // this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
-          //   if (err) return console.log('err: ', err)
-          //   console.log('paratii protocol msg sent: ', args.hash)
-          // })
+          let msg = this.ipfs.protocol.createCommand('pin:error',
+            { hash: args.hash,
+              err: JSON.stringify(err)
+            })
+          this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', args.hash)
+          })
           console.log('sending pin:error ', err)
         } else {
-          // let msg = this.ipfs.protocol.createCommand('pin:done', { hash: args.hash })
-          // console.log('sending pin:done ', msg)
-          // this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
-          //   if (err) return console.log('err: ', err)
-          //   console.log('paratii protocol msg sent: ', args.hash)
-          // })
+          let msg = this.ipfs.protocol.createCommand('pin:done', { hash: args.hash })
+          console.log('sending pin:done ', msg)
+          this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', args.hash)
+          })
           console.log('grabFile done!!')
         }
       })
