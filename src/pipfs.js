@@ -47,6 +47,21 @@ class PIPFS extends EventEmitter {
           this.emit('transcode', peerId, command)
         })
 
+        this.protocol.notifications.on('command', (peerId, command) => {
+          log('got command from ', peerId.toB58String(), ' | command: ', command)
+          let commandStr = command.payload.toString()
+          switch (commandStr) {
+            case 'transcode':
+              // this.emit('transcode', peerId, command)
+              break
+            case 'pin':
+              this.emit('pin', peerId, command)
+              break
+            default:
+              console.log('received command : ', commandStr)
+          }
+        })
+
         // this.protocol.notifications.on('command:transcode', (peerId, command) => {
         //   log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
         //   this.emit('transcode', peerId, command)
@@ -126,21 +141,36 @@ class PIPFS extends EventEmitter {
 
   grabFile (hash, cb) {
     let stream = this.ipfs.files.catReadableStream(hash)
-    let fileStream = fs.createWriteStream(this.rootPath = path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+    let fileStream = fs.createWriteStream(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
     stream.on('error', (err) => {
+      console.log('got stream error ', err)
       if (err) return cb(err)
     })
     stream.on('end', () => {
       fileStream.close() // don't forget to close that stream.
+      console.log('got file ', hash, '.. closing stream..')
       setTimeout(() => {
         cb()
       }, 1)
     })
     stream.on('data', (data) => {
+      fileStream.write(data)
+      console.log('data: ', data.length)
       // report progress
       this.emit('progress', hash, data.length)
     })
-    stream.pipe(fileStream)
+    // stream.pipe(fileStream)
+  }
+
+  // TODO this isn't actually pinning.
+  pinJSON (hash, cb) {
+    this.ipfs.object.get(hash).then((node) => {
+      if (node) {
+        cb(null, JSON.parse(node.toJSON().data))
+      }
+    }).catch((err) => {
+      if (err) return cb(err)
+    })
   }
 
   addDirToIPFS (dirPath, cb) {
