@@ -42,17 +42,17 @@ class PIPFS extends EventEmitter {
           console.log('[paratii-protocol] ', peerId.toB58String(), ' new Msg: ', msg)
         })
 
-        // this.protocol.notifications.on('command:transcode', (peerId, command) => {
-        //   log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
-        //   this.emit('transcode', peerId, command)
-        // })
+        this.protocol.notifications.on('command:transcode', (peerId, command) => {
+          log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
+          this.emit('transcode', peerId, command)
+        })
 
         this.protocol.notifications.on('command', (peerId, command) => {
           log('got command from ', peerId.toB58String(), ' | command: ', command)
           let commandStr = command.payload.toString()
           switch (commandStr) {
             case 'transcode':
-              this.emit('transcode', peerId, command)
+              // this.emit('transcode', peerId, command)
               break
             case 'pin':
               this.emit('pin', peerId, command)
