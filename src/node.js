@@ -127,7 +127,7 @@ class PublisherNode extends EventEmitter {
         if (err) {
           let msg = this.ipfs.protocol.createCommand('pin:error',
             { hash: args.hash,
-              error: JSON.stringify(err)
+              err: JSON.stringify(err)
             })
           console.log('sending pin:error ', msg)
           this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
