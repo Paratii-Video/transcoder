@@ -122,7 +122,7 @@ class PublisherNode extends EventEmitter {
     this.ipfs.on('pin', (peerId, command) => {
       console.log('Got pinning command ', command.payload.toString(), '\n', command.args.toString())
       let args = JSON.parse(command.args.toString())
-      this.ipfs.pinJSON(args.hash, (err) => {
+      this.ipfs.grabFile(args.hash, (err) => {
         if (err) {
           let msg = this.ipfs.protocol.createCommand('pin:error',
             { hash: args.hash,
