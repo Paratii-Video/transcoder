@@ -77,6 +77,12 @@ class PIPFS extends EventEmitter {
           }
         })
 
+        this.ipfs._libp2pNode.on('error', (err) => {
+          if (err) {
+            console.error('libp2p ERROR: ', err)
+          }
+        })
+
         // this.protocol.notifications.on('command:transcode', (peerId, command) => {
         //   log('got Transcode command from ', peerId.toB58String(), ' | command: ', command)
         //   this.emit('transcode', peerId, command)

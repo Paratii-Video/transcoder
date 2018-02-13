@@ -162,6 +162,7 @@ class Job extends EventEmitter {
 
   _handleError (e) {
     // TODO: handle errors properly like a gentleman.
+    console.error('_handleError: ', e)
     return e
   }
 
@@ -232,7 +233,7 @@ class Job extends EventEmitter {
         })
         .on('progress', (progress) => {
           let percent = tutils.getProgressPercent(progress.timemark, this.codecData.duration).toFixed(2)
-          console.log(this.id, ':', size, '\t', percent)
+          // console.log(this.id, ':', size, '\t', percent)
           this.emit('progress', this.hash, size, percent)
         })
         .save(this.rootPath + '/' + String(size.split('x')[1]) + '.m3u8')
@@ -265,8 +266,9 @@ class Job extends EventEmitter {
                 db.updateInfo(this.id, {result: this.result, meta: this.meta})
                 db.updateInfo(this.hash, {result: this.result, meta: this.meta})
                 // -----------------------------------
-
-                cb(null, this.result)
+                setTimeout(() => {
+                  cb(null, this.result)
+                }, 100)
               })
             })
           })
