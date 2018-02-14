@@ -71,11 +71,11 @@ class Job extends EventEmitter {
         console.log('Will generate ' + filenames)
         outputedFileNames = filenames
       })
-      .on('end', () => {
-        console.log('screenshots generated!')
-        setTimeout(() => {
+      .on('end', (data) => {
+        console.log('screenshots generated!', data)
+        setImmediate(() => {
           callback(null, outputedFileNames)
-        }, 10)
+        })
       })
       .on('error', (err) => {
         if (err) {
@@ -85,6 +85,7 @@ class Job extends EventEmitter {
       })
       .screenshots({
         count: 4,
+        timestamps: ['10%', '25%', '75%', '85%'],
         folder: outputFolder,
         filename: 'thumbnail-%r.png'
       })
@@ -250,7 +251,8 @@ class Job extends EventEmitter {
           fs.writeFile(this.result.root + '/master.m3u8', masterPlaylist, (err, done) => {
             if (err) return cb(this._handleError(err))
             console.log('generating screenshots from ', this.result.root + '/master.m3u8', '\t', this.rootPath)
-            this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
+            // this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
+            this.generateScreenshots(path.join(os.tmpdir(), 'paratii-ipfs-' + this.hash), this.rootPath, (err, screenshots) => {
               if (err) return cb(this._handleError(err))
               this.result.screenshots = screenshots
               console.log('rootPath: ', this.rootPath)
