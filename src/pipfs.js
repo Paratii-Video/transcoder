@@ -64,21 +64,6 @@ class PIPFS extends EventEmitter {
           }
         })
 
-        this.protocol.notifications.on('command', (peerId, command) => {
-          log('got command from ', peerId.toB58String(), ' | command: ', command)
-          let commandStr = command.payload.toString()
-          switch (commandStr) {
-            case 'transcode':
-              // this.emit('transcode', peerId, command)
-              break
-            case 'pin':
-              this.emit('pin', peerId, command)
-              break
-            default:
-              console.log('received command : ', commandStr)
-          }
-        })
-
         this.ipfs._libp2pNode.on('error', (err) => {
           if (err) {
             console.error('libp2p ERROR: ', err)
