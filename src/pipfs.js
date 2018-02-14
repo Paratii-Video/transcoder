@@ -220,27 +220,37 @@ class PIPFS extends EventEmitter {
     fs.readdir(dirPath, (err, files) => {
       if (err) return callback(err)
       let hashes = []
+      try {
+        pull(
+          pull.values(files),
+          pull.through((file) => {
+            console.log('Adding ', file)
+            // fileSize = file.size
+            // total = 0
+          }),
+          pull.asyncMap((file, cb) => pull(
+            pull.values([{
+              path: path.join(dirPath, file),
+              // content: pullFilereader(file)
+              content: pull(
+                pullFile(path.join(dirPath, file))
+                // pullCatch((err) => {
+                //   console.error('PULL pullFile ERROR ', err)
+                // }),
+                // block({size: 32 * 1024})
+                // pull.through((chunk) => updateProgress(chunk.length))
+              )
+            }]),
+            pull.collect((err, f) => {
+              if (err) {
+                return cb(err)
+              }
 
-      pull(
-        pull.values(files),
-        pull.through((file) => {
-          console.log('Adding ', file)
-          // fileSize = file.size
-          // total = 0
-        }),
-        pull.asyncMap((file, cb) => pull(
-          pull.values([{
-            path: path.join(dirPath, file),
-            // content: pullFilereader(file)
-            content: pull(
-              pullFile(path.join(dirPath, file))
-              // pullCatch((err) => {
-              //   console.error('PULL pullFile ERROR ', err)
-              // }),
-              // block({size: 32 * 1024})
-              // pull.through((chunk) => updateProgress(chunk.length))
-            )
-          }]),
+              console.log('f: ', f)
+              setImmediate(() => {
+                cb(null, f)
+              })
+            }))),
           pullCatch((err) => {
             console.error('PULL BEFORE addPullStream ERROR ', err)
           }),
@@ -250,37 +260,28 @@ class PIPFS extends EventEmitter {
           }),
           pull.collect((err, res) => {
             if (err) {
-              return cb(err)
+              return callback(err)
             }
-            const file = res[0]
+
             res.map((file) => {
               console.log('Adding %s finished as %s', file.path, file.hash)
               if ('/' + file.path === dirPath) {
                 console.log('this is the hash to return ')
                 resp = file
+                setImmediate(() => {
+                  callback(null, resp)
+                })
               }
             })
 
-            hashes.push(file)
-            setImmediate(() => {
-              cb(null, file)
-            })
-          }))),
-        pullCatch((err) => {
-          console.error('first collect ERROR ', err)
-        }),
-        pull.collect((err, files) => {
-          if (err) {
-            console.log('IPFS UPLOAD ERROR: ', err)
-          }
-          console.log('uploaded To IPFS ', files)
-          setImmediate(() => {
-            callback(null, resp)
+            // setImmediate(() => {
+            //   cb(null, file)
+            // })
           })
-          // if (files && files.length) {
-          // }
-        })
-      )
+        )
+      } catch (e) {
+        console.log('GOTCHA : ', e)
+      }
       // eachSeries(files, (file, next) => {
       //   next = once(next)
       //   try {
