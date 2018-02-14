@@ -104,6 +104,7 @@ module.exports = {
       res = res[0]
       res = res.split('x')
     } else {
+      console.log('RES IS NULL , ', res)
       return null
     }
     let width = parseInt(res[0])

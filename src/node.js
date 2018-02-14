@@ -24,10 +24,10 @@ class PublisherNode extends EventEmitter {
         EXPERIMENTAL: { // enable experimental features
           pubsub: false,
           sharding: true, // enable dir sharding
-          dht: true // enable KadDHT, currently not interopable with go-ipfs
+          dht: false // enable KadDHT, currently not interopable with go-ipfs
         },
         bitswap: {
-          maxMessageSize: 32 * 1024
+          maxMessageSize: 256 * 1024
         },
         // repo: String(Math.random()),
         config: {
