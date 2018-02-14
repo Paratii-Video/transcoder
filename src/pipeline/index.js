@@ -48,10 +48,14 @@ class Pipeline extends EventEmitter {
             chunkSize: chunkSize,
             percent: (this._uploaderProgress[hash] / this._jobs[hash].size) * 100
           })
-        this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
-          if (err) return console.log('err: ', err)
-          console.log('paratii protocol msg sent: ', hash)
-        })
+        try {
+          this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', hash)
+          })
+        } catch (e) {
+          console.error('Libp2p ERROR: ', e)
+        }
       }
     })
   }
@@ -89,10 +93,14 @@ class Pipeline extends EventEmitter {
         { hash: this.hash,
           author: this._jobs[job.hash].peerId.id
         })
-      this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-        if (err) return console.log('err: ', err)
-        console.log('paratii protocol msg sent: ', job.hash)
-      })
+      try {
+        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+          if (err) return console.log('err: ', err)
+          console.log('paratii protocol msg sent: ', job.hash)
+        })
+      } catch (e) {
+        console.error('Libp2p ERROR: ', e)
+      }
       this._lastUpdate[job.hash] = new Date()
     }
 
@@ -104,10 +112,14 @@ class Pipeline extends EventEmitter {
               author: this._jobs[job.hash].peerId.id,
               err: JSON.stringify(err)
             })
-          this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-            if (err) return console.log('err: ', err)
-            console.log('paratii protocol msg sent: ', job.hash)
-          })
+          try {
+            this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+              if (err) return console.log('err: ', err)
+              console.log('paratii protocol msg sent: ', job.hash)
+            })
+          } catch (e) {
+            console.error('Libp2p ERROR: ', e)
+          }
         }
 
         // remove it from in-progress
@@ -128,26 +140,34 @@ class Pipeline extends EventEmitter {
             author: this._jobs[job.hash].peerId.id,
             size: size
           })
-        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-          if (err) return console.log('err: ', err)
-          console.log('paratii protocol msg sent: ', job.hash)
-        })
+        try {
+          this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', job.hash)
+          })
+        } catch (e) {
+          console.error('Libp2p ERROR: ', e)
+        }
       }
     })
 
     // paratii-protocol signal to client the progress of a job.
     this._jobs[job.hash].on('progress', (hash, size, percent) => {
-      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 5)) {
+      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 15)) {
         let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:progress',
           { hash: hash,
             author: this._jobs[job.hash].peerId.id,
             size: size,
             percent: percent
           })
-        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-          if (err) return console.log('err: ', err)
-          console.log('paratii protocol msg sent: ', job.hash)
-        })
+        try {
+          this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', job.hash)
+          })
+        } catch (e) {
+          console.error('Libp2p ERROR: ', e)
+        }
 
         this._lastUpdate[job.hash] = new Date()
       }
@@ -164,11 +184,14 @@ class Pipeline extends EventEmitter {
             author: this._jobs[job.hash].peerId.id,
             result: JSON.stringify(jobResult)
           })
-        this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
-          if (err) return console.log('err: ', err)
-          console.log('paratii protocol msg sent: ', job.hash)
-        })
-
+        try {
+          this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', job.hash)
+          })
+        } catch (e) {
+          console.error('Libp2p ERROR: ', e)
+        }
         // FOR TESTING
         // delete the file if it's used for testing.
         // QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ
@@ -223,15 +246,15 @@ class Pipeline extends EventEmitter {
           // grab file first from IPFS
           // this is useful so we can let the client close his/her window without
           // having to wait for ffmpeg.
-          this.pipfs.grabFile(job.hash, (err) => {
-            if (err) {
-              console.error('grabfile ERROR : ', err)
-            } else {
-              // TODO
-              // send user notification that he/she can close that window.
-              console.log('file %s grabbed successfully', job.hash)
-            }
-          })
+          // this.pipfs.grabFile(job.hash, (err) => {
+          //   if (err) {
+          //     console.error('grabfile ERROR : ', err)
+          //   } else {
+          //     // TODO
+          //     // send user notification that he/she can close that window.
+          //     console.log('file %s grabbed successfully', job.hash)
+          //   }
+          // })
 
           this._queue.push(job, job.priority || 0, (err, result) => {
             if (err) {
@@ -294,10 +317,14 @@ class Pipeline extends EventEmitter {
                       author: job.peerId.id,
                       result: JSON.stringify(result.result)
                     })
-                  this.pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
-                    if (err) return console.log('err: ', err)
-                    console.log('paratii protocol msg sent: ', job.hash)
-                  })
+                  try {
+                    this.pipfs.protocol.network.sendMessage(job.peerId, msg, (err) => {
+                      if (err) return console.log('err: ', err)
+                      console.log('paratii protocol msg sent: ', job.hash)
+                    })
+                  } catch (e) {
+                    console.error('Libp2p ERROR: ', e)
+                  }
                 }
               }
             })

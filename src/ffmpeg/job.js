@@ -71,11 +71,11 @@ class Job extends EventEmitter {
         console.log('Will generate ' + filenames)
         outputedFileNames = filenames
       })
-      .on('end', () => {
-        console.log('screenshots generated!')
-        setTimeout(() => {
+      .on('end', (data) => {
+        console.log('screenshots generated!', data)
+        setImmediate(() => {
           callback(null, outputedFileNames)
-        }, 10)
+        })
       })
       .on('error', (err) => {
         if (err) {
@@ -85,6 +85,7 @@ class Job extends EventEmitter {
       })
       .screenshots({
         count: 4,
+        timestamps: ['10%', '25%', '75%', '85%'],
         folder: outputFolder,
         filename: 'thumbnail-%r.png'
       })
@@ -162,6 +163,7 @@ class Job extends EventEmitter {
 
   _handleError (e) {
     // TODO: handle errors properly like a gentleman.
+    console.error('_handleError: ', e)
     return e
   }
 
@@ -172,18 +174,18 @@ class Job extends EventEmitter {
    * @return {Object}      returns an object with master hash, path on disk and size.
    */
   run (cb) {
-    let stream
-
-    try {
-      stream = this.pipfs.ipfs.files.catReadableStream(this.hash)
-    } catch (e) {
-      if (e) return cb(this._handleError(e))
-    }
+    // let stream
+    //
+    // try {
+    //   stream = this.pipfs.ipfs.files.catReadableStream(this.hash)
+    // } catch (e) {
+    //   if (e) return cb(this._handleError(e))
+    // }
 
     fs.mkdir(this.rootPath, (err) => {
       if (err) return cb(this._handleError(err))
 
-      this.command = ffmpeg(stream)
+      this.command = ffmpeg('/tmp/paratii-ipfs-' + this.hash)
         // .inputOptions('-strict -2')
         .addOption('-preset', 'veryfast')
         .addOption('-framerate', 30)
@@ -232,7 +234,7 @@ class Job extends EventEmitter {
         })
         .on('progress', (progress) => {
           let percent = tutils.getProgressPercent(progress.timemark, this.codecData.duration).toFixed(2)
-          console.log(this.id, ':', size, '\t', percent)
+          // console.log(this.id, ':', size, '\t', percent)
           this.emit('progress', this.hash, size, percent)
         })
         .save(this.rootPath + '/' + String(size.split('x')[1]) + '.m3u8')
@@ -248,8 +250,9 @@ class Job extends EventEmitter {
 
           fs.writeFile(this.result.root + '/master.m3u8', masterPlaylist, (err, done) => {
             if (err) return cb(this._handleError(err))
-
-            this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
+            console.log('generating screenshots from ', this.result.root + '/master.m3u8', '\t', this.rootPath)
+            // this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
+            this.generateScreenshots(path.join(os.tmpdir(), 'paratii-ipfs-' + this.hash), this.rootPath, (err, screenshots) => {
               if (err) return cb(this._handleError(err))
               this.result.screenshots = screenshots
               console.log('rootPath: ', this.rootPath)
@@ -265,8 +268,9 @@ class Job extends EventEmitter {
                 db.updateInfo(this.id, {result: this.result, meta: this.meta})
                 db.updateInfo(this.hash, {result: this.result, meta: this.meta})
                 // -----------------------------------
-
-                cb(null, this.result)
+                setTimeout(() => {
+                  cb(null, this.result)
+                }, 100)
               })
             })
           })
@@ -284,7 +288,10 @@ class Job extends EventEmitter {
   start (cb) {
     this.getVideoMetadata((err, meta) => {
       if (err) return this.emit('error', err, this.hash)
-      this.run(cb)
+      this.pipfs.grabFile(this.hash, (err) => {
+        if (err) return this.emit('error', err, this.hash)
+        this.run(cb)
+      })
     })
   }
 }

@@ -13,6 +13,8 @@ const HttpAPI = require('ipfs/src/http/index.js')
 const ParatiiProtocol = require('paratii-protocol')
 const pull = require('pull-stream')
 const pullFile = require('pull-file')
+const block = require('pull-block')
+const pullCatch = require('pull-catch')
 const { eachSeries, nextTick } = require('async')
 const once = require('once')
 
@@ -59,6 +61,12 @@ class PIPFS extends EventEmitter {
               break
             default:
               console.log('received command : ', commandStr)
+          }
+        })
+
+        this.ipfs._libp2pNode.on('error', (err) => {
+          if (err) {
+            console.error('libp2p ERROR: ', err)
           }
         })
 
@@ -116,7 +124,7 @@ class PIPFS extends EventEmitter {
             // pull.through((chunk) => updateProgress(chunk.length))
           )
         }]),
-        this.ipfs.files.addPullStream({chunkerOptions: {maxChunkSize: 64048}}), // default size 262144
+        this.ipfs.files.addPullStream({chunkerOptions: {maxChunkSize: 128 * 1024}}), // default size 262144
         pull.collect((err, res) => {
           if (err) {
             return cb(err)
@@ -154,11 +162,12 @@ class PIPFS extends EventEmitter {
       }, 1)
     })
     stream.on('data', (data) => {
-      fileStream.write(data)
+      // fileStream.write(data)
       console.log('data: ', data.length)
       // report progress
       this.emit('progress', hash, data.length)
     })
+    stream.pipe(fileStream)
     // stream.pipe(fileStream)
   }
 
@@ -173,58 +182,121 @@ class PIPFS extends EventEmitter {
     })
   }
 
-  addDirToIPFS (dirPath, cb) {
-    cb = once(cb)
+  addDirToIPFS (dirPath, callback) {
+    callback = once(callback)
     let resp = null
     console.log('adding ', dirPath, ' to IPFS')
-    const addStream = this.ipfs.files.addReadableStream()
-    addStream.on('data', (file) => {
-      console.log('dirPath ', dirPath)
-      console.log('file Added ', file)
-      if ('/' + file.path === dirPath) {
-        console.log('this is the hash to return ')
-        resp = file
-        nextTick(() => cb(null, resp))
-      }
-    })
-
-    addStream.on('end', () => {
-      console.log('addStream ended')
-      // nextTick(() => cb(null, resp))
-    })
+    // const addStream = this.ipfs.files.addReadableStream()
+    // addStream.on('data', (file) => {
+    //   console.log('dirPath ', dirPath)
+    //   console.log('file Added ', file)
+    //   if ('/' + file.path === dirPath) {
+    //     console.log('this is the hash to return ')
+    //     resp = file
+    //     nextTick(() => cb(null, resp))
+    //   }
+    // })
+    //
+    // addStream.on('end', () => {
+    //   console.log('addStream ended')
+    //   // nextTick(() => cb(null, resp))
+    // })
 
     fs.readdir(dirPath, (err, files) => {
-      if (err) return cb(err)
-      eachSeries(files, (file, next) => {
-        next = once(next)
-        try {
-          console.log('reading file ', file)
-          let rStream = fs.createReadStream(path.join(dirPath, file))
-          rStream.on('error', (err) => {
-            if (err) {
-              log('rStream Error ', err)
-              return next()
-            }
-          })
-          if (rStream) {
-            addStream.write({
+      if (err) return callback(err)
+      let hashes = []
+      try {
+        pull(
+          pull.values(files),
+          pull.through((file) => {
+            console.log('Adding ', file)
+            // fileSize = file.size
+            // total = 0
+          }),
+          pull.asyncMap((file, cb) => pull(
+            pull.values([{
               path: path.join(dirPath, file),
-              content: rStream
+              // content: pullFilereader(file)
+              content: pull(
+                pullFile(path.join(dirPath, file))
+                // pullCatch((err) => {
+                //   console.error('PULL pullFile ERROR ', err)
+                // }),
+                // block({size: 32 * 1024})
+                // pull.through((chunk) => updateProgress(chunk.length))
+              )
+            }]),
+            pull.collect((err, f) => {
+              if (err) {
+                return cb(err)
+              }
+
+              console.log('f: ', f)
+              setImmediate(() => {
+                cb(null, f)
+              })
+            }))),
+          pullCatch((err) => {
+            console.error('PULL BEFORE addPullStream ERROR ', err)
+          }),
+          this.ipfs.files.addPullStream({chunkerOptions: {maxChunkSize: 128 * 1024}}), // default size 262144
+          pullCatch((err) => {
+            console.error('PULL addPullStream ERROR ', err)
+          }),
+          pull.collect((err, res) => {
+            if (err) {
+              return callback(err)
+            }
+
+            res.map((file) => {
+              console.log('Adding %s finished as %s', file.path, file.hash)
+              if ('/' + file.path === dirPath) {
+                console.log('this is the hash to return ')
+                resp = file
+                setImmediate(() => {
+                  callback(null, resp)
+                })
+              }
             })
-          }
-        } catch (e) {
-          if (e) {
-            console.log('gotcha ', e)
-          }
-        } finally {
-        }
-        // next()
-        nextTick(() => next())
-      }, (err) => {
-        if (err) return cb(err)
-        // addStream.destroy()
-        addStream.end()
-      })
+
+            // setImmediate(() => {
+            //   cb(null, file)
+            // })
+          })
+        )
+      } catch (e) {
+        console.log('GOTCHA : ', e)
+      }
+      // eachSeries(files, (file, next) => {
+      //   next = once(next)
+      //   try {
+      //     console.log('reading file ', file)
+      //     let rStream = fs.createReadStream(path.join(dirPath, file))
+      //     rStream.on('error', (err) => {
+      //       if (err) {
+      //         log('rStream Error ', err)
+      //         return next()
+      //       }
+      //     })
+      //     if (rStream) {
+      //       addStream.write({
+      //         path: path.join(dirPath, file),
+      //         content: rStream
+      //       })
+      //     }
+      //   } catch (e) {
+      //     if (e) {
+      //       console.log('gotcha ', e)
+      //     }
+      //   } finally {
+      //   }
+      //   // next()
+      //   nextTick(() => next())
+      // }, (err) => {
+      //   if (err) return cb(err)
+      //   // addStream.destroy()
+      //   addStream.end()
+      // })
     })
   }
 }
