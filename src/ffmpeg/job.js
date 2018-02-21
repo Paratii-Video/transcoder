@@ -243,6 +243,7 @@ class Job extends EventEmitter {
         if (err) return cb(this._handleError(err))
         this.result = this.result || {}
         this.result['root'] = this.rootPath
+        this.result.duration = this.codecData.duration || this.duration
         console.log('result after mapLimit ', this.result)
         this.generateManifest((err, masterPlaylist) => {
           if (err) return cb(this._handleError(err))
