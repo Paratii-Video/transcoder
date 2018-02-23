@@ -24,6 +24,7 @@ const mainDB = sublevel(levelup(leveldown('./datastore')))
 
 const db = {
   status: mainDB.sublevel('status'),
+  progress: mainDB.sublevel('progress'),
   info: mainDB.sublevel('info'),
   origin2Transcoded: mainDB.sublevel('origin2Transcoded'),
   transcoded2Origin: mainDB.sublevel('transcoded2Origin'),

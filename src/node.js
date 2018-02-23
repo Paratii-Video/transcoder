@@ -148,8 +148,8 @@ class PublisherNode extends EventEmitter {
     this.ipfs.on('getMetaData', (peerId, command) => {
       console.log('Got getMetaData command ', command.payload.toString(), '\n', command.args.toString())
       let args = JSON.parse(command.args.toString())
-      db.getInfo(args.hash, (err, data) => {
-        if (err) {
+      db.getOverview(args.hash, (err, data) => {
+        if (err && !data) {
           let msg = this.ipfs.protocol.createCommand('getMetaData:error',
             { hash: args.hash,
               err: JSON.stringify(err)

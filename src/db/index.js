@@ -47,6 +47,35 @@ const dataOps = {
     db.status.del(originHash, cb)
   },
 
+  // ------------------------[progress Ops]-----------------------------------------
+  getProgress: (originHash, cb) => {
+    db.progress.get(originHash, cb)
+  },
+
+  updateProgress: (originHash, json, cb) => {
+    db.progress.get(originHash, (err, _str) => {
+      if (err) {
+        // no progress for this origin hash just yet.
+        db.progress.put(originHash, JSON.stringify(json), cb)
+      } else {
+        let obj = JSON.parse(_str)
+        let newObj = Object.assign({}, obj, json)
+        db.progress.put(originHash, JSON.stringify(newObj), cb)
+      }
+    })
+  },
+
+  getOverview: (originHash, callback) => {
+    parallel({
+      info: (cb) => {
+        dataOps.getInfo(originHash, cb)
+      },
+      progress: (cb) => {
+        dataOps.getProgress(originHash, cb)
+      }
+    }, callback)
+  },
+
   // ------------------------[Info Ops]-----------------------------------------
   /**
    * get Info on a hash

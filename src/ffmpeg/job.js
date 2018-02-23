@@ -235,6 +235,9 @@ class Job extends EventEmitter {
         .on('progress', (progress) => {
           let percent = tutils.getProgressPercent(progress.timemark, this.codecData.duration).toFixed(2)
           // console.log(this.id, ':', size, '\t', percent)
+          let obj = {}
+          obj[String(size)] = percent
+          db.updateProgress(this.hash, obj)
           this.emit('progress', this.hash, size, percent)
         })
         .save(this.rootPath + '/' + String(size.split('x')[1]) + '.m3u8')
