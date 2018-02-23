@@ -13,9 +13,9 @@ const HttpAPI = require('ipfs/src/http/index.js')
 const ParatiiProtocol = require('paratii-protocol')
 const pull = require('pull-stream')
 const pullFile = require('pull-file')
-const block = require('pull-block')
+// const block = require('pull-block')
 const pullCatch = require('pull-catch')
-const { eachSeries, nextTick } = require('async')
+// const { eachSeries, nextTick } = require('async')
 const once = require('once')
 
 const log = require('debug')('paratii:ipfs')
@@ -58,6 +58,9 @@ class PIPFS extends EventEmitter {
               break
             case 'pin':
               this.emit('pin', peerId, command)
+              break
+            case 'getMetaData':
+              this.emit('getMetaData', peerId, command)
               break
             default:
               console.log('received command : ', commandStr)
@@ -204,7 +207,7 @@ class PIPFS extends EventEmitter {
 
     fs.readdir(dirPath, (err, files) => {
       if (err) return callback(err)
-      let hashes = []
+      // let hashes = []
       try {
         pull(
           pull.values(files),

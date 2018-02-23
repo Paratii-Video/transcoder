@@ -6,7 +6,7 @@ const compression = require('compression')
 const dopts = require('default-options')
 const PIPFS = require('./pipfs')
 const apiRoutes = require('./api/v1')
-// const db = require('./db')
+const db = require('./db')
 const Pipeline = require('./pipeline')
 
 class PublisherNode extends EventEmitter {
@@ -145,6 +145,33 @@ class PublisherNode extends EventEmitter {
       })
     })
 
+    this.ipfs.on('getMetaData', (peerId, command) => {
+      console.log('Got getMetaData command ', command.payload.toString(), '\n', command.args.toString())
+      let args = JSON.parse(command.args.toString())
+      db.getInfo(args.hash, (err, data) => {
+        if (err) {
+          let msg = this.ipfs.protocol.createCommand('getMetaData:error',
+            { hash: args.hash,
+              err: JSON.stringify(err)
+            })
+          this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', args.hash)
+          })
+          console.log('sending getMetaData:error ', err)
+        } else {
+          let msg = this.ipfs.protocol.createCommand('getMetaData:done', {
+            hash: args.hash,
+            data: data
+          })
+          console.log('sending getMetaData:done ', msg)
+          this.ipfs.protocol.network.sendMessage(peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', args.hash)
+          })
+        }
+      })
+    })
     // this.ipfs.on('transcoding:progress', (peerId, command) => {
     //   // let args = JSON.parse(command.args.toString())
     //   console.log('transcoding progress:::: ', command.payload.toString(), '\n', command.args.toString())
