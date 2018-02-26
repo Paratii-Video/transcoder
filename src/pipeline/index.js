@@ -271,7 +271,11 @@ class Pipeline extends EventEmitter {
             }
             // TODO. now the job is done. update status in DB
             if (result) {
-              db.updateStatus(job.hash, 'finished')
+              if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+                // testing hash
+              } else {
+                db.updateStatus(job.hash, 'finished')
+              }
               this.emit('job:status', job, 'finished')
               return callback(null, 'done')
             }
