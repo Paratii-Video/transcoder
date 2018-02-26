@@ -160,6 +160,7 @@ class PIPFS extends EventEmitter {
     stream.on('end', () => {
       fileStream.close() // don't forget to close that stream.
       console.log('got file ', hash, '.. closing stream..')
+      this.emit('done', hash)
       setTimeout(() => {
         cb()
       }, 1)

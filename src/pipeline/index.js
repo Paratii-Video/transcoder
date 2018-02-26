@@ -63,6 +63,10 @@ class Pipeline extends EventEmitter {
         }
       }
     })
+
+    this.pipfs.on('done', (hash) => {
+      this._uploaderProgress[hash] = 0
+    })
   }
 
   /**
