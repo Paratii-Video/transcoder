@@ -11,6 +11,11 @@ const dopts = require('default-options')
 const db = require('../db')
 const Job = require('../ffmpeg/job')
 const noop = function () { }
+
+const testHashes = [
+  'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ',
+  'QmeRc6Zt1Ze7qo7KyucCS1Fb8gEZkfe2d6zfMYY5Xy54pq'
+]
 /**
  * The main class for the transcoding pipeline.
  * @extends EventEmitter
@@ -77,7 +82,7 @@ class Pipeline extends EventEmitter {
   _processJob (job, callback) {
     // 1. update status to 'in-progress'
     // 2. run it.
-    if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+    if (testHashes.indexOf(job.hash) !== -1) {
       // testing hash
     } else {
       db.updateStatus(job.hash, 'in-progress')
@@ -199,7 +204,7 @@ class Pipeline extends EventEmitter {
         // FOR TESTING
         // delete the file if it's used for testing.
         // QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ
-        if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+        if (testHashes.indexOf(job.hash) !== -1) {
           db.removeStatus(job.hash, (e) => {
             if (e) {
               console.log('DB removeStatus Error: ', e)
@@ -244,7 +249,7 @@ class Pipeline extends EventEmitter {
           // video is fresh. go for it.
           // 1. add it to status as queued
           // 2. push it to queue
-          if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+          if (testHashes.indexOf(job.hash) !== -1) {
             // testing hash
           } else {
             db.updateStatus(job.hash, 'queued')
@@ -271,7 +276,7 @@ class Pipeline extends EventEmitter {
             }
             // TODO. now the job is done. update status in DB
             if (result) {
-              if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+              if (testHashes.indexOf(job.hash) !== -1) {
                 // testing hash
               } else {
                 db.updateStatus(job.hash, 'finished')
