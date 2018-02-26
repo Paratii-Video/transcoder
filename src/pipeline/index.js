@@ -77,7 +77,11 @@ class Pipeline extends EventEmitter {
   _processJob (job, callback) {
     // 1. update status to 'in-progress'
     // 2. run it.
-    db.updateStatus(job.hash, 'in-progress')
+    if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+      // testing hash
+    } else {
+      db.updateStatus(job.hash, 'in-progress')
+    }
     this.emit('job:status', job, 'in-progress')
     // -------------------------------------------------------------------------
     // FOR TESTING ONLY
@@ -110,7 +114,7 @@ class Pipeline extends EventEmitter {
           let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:error',
             { hash: hash,
               author: this._jobs[job.hash].peerId.id,
-              err: JSON.stringify(err)
+              err: Buffer.from(err)
             })
           try {
             this._jobs[job.hash].pipfs.protocol.network.sendMessage(this._jobs[job.hash].peerId, msg, (err) => {
@@ -240,7 +244,12 @@ class Pipeline extends EventEmitter {
           // video is fresh. go for it.
           // 1. add it to status as queued
           // 2. push it to queue
-          db.updateStatus(job.hash, 'queued')
+          if (job.hash === 'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ') {
+            // testing hash
+          } else {
+            db.updateStatus(job.hash, 'queued')
+          }
+
           this.emit('job:status', job, 'queued')
           job.pipfs = this.pipfs
           // grab file first from IPFS
