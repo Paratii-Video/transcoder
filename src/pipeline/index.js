@@ -14,7 +14,8 @@ const noop = function () { }
 
 const testHashes = [
   'QmTkuJTcQhtQm8bPzF1hQmhrDPsdLs28soUZQEUx7t9pBJ',
-  'QmeRc6Zt1Ze7qo7KyucCS1Fb8gEZkfe2d6zfMYY5Xy54pq'
+  'QmeRc6Zt1Ze7qo7KyucCS1Fb8gEZkfe2d6zfMYY5Xy54pq',
+  'QmYnSopw4byhtU2UzNhfaEcGg5gjXJ8sc9ZRkXVc6qR7rU'
 ]
 /**
  * The main class for the transcoding pipeline.
