@@ -17,7 +17,7 @@
     "express": "^4.16.2",
     "ffmpeg-stream": "^0.5.0",
     "fluent-ffmpeg": "^2.1.2",
-    "ipfs": "github:Paratii-Video/js-ipfs#paratii/v0.27.6",
+    "ipfs": "github:Paratii-Video/js-ipfs#paratii/v0.28.0-beta",
     "ipfs-api": "^14.3.5",
     "level-sublevel": "^6.6.1",
     "leveldown": "^2.0.0",
