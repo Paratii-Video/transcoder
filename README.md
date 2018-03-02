@@ -2,7 +2,7 @@
 
 **WORK IN PROGRESS**
 
-This is the main implementation for the `paratii` transcoder and gateway.
+This is the main implementation for the `paratii` transcoding service and gateway.
 
 ## Dependencies
 
