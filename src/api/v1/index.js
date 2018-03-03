@@ -109,6 +109,8 @@ module.exports = (node) => {
                 return res.status(400).send('couldn\'t produce ipfs hash')
               }
             })
+
+            delete streams[req.body.resumableFilename]
           })
 
           setTimeout(() => {
