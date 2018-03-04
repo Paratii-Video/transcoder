@@ -47,6 +47,10 @@ class Pipeline extends EventEmitter {
         // TODO calculate percent. send it to the client. store it here if
         // client isn't available
         this._uploaderProgress[hash] = this._uploaderProgress[hash] || 0
+        if (this._uploaderProgress[hash] > 100) {
+          // catching this one in case pipfs done event isn't sufficient.
+          this._uploaderProgress[hash] = 0
+        }
         this._uploaderProgress[hash] += chunkSize
         let msg = this._jobs[hash].pipfs.protocol.createCommand('uploader:progress',
           { hash: hash,
