@@ -117,15 +117,14 @@ module.exports = (node) => {
         })
       }
 
-      streams[req.body.resumableFilename].write(req.files.file.data)
-      setTimeout(() => {
+      streams[req.body.resumableFilename].write(req.files.file.data, () => {
         if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
           streams[req.body.resumableFilename].end()
           console.log('ending stream')
-        } else {
-          return res.send('ok')
         }
-      }, 1)
+
+        return res.status(200).send('ok')
+      })
     }
     // req.body:  { resumableChunkNumber: '29',
     //   resumableChunkSize: '1048576',
