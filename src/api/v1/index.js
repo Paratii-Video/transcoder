@@ -92,39 +92,41 @@ module.exports = (node) => {
           }
         })
 
-        streams[req.body.resumableFilename].once('end', () => {
+        streams[req.body.resumableFilename].once('close', () => {
+          delete streams[req.body.resumableFilename]
+        })
+      }
+
+      if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
+        streams[req.body.resumableFilename].end(req.files.file.data, () => {
+          console.log('ending stream')
+          console.log(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
           node.ipfs.upload([path.join(os.tmpdir(), 'paratii-ipfs-' + hash)], (err, hashes) => {
             if (err) {
               return res.status(500).send(err)
             }
             console.log('hashes: ', hashes)
             if (hashes && hashes[0]) {
-              if (hashes[0].hash === req.params.hash) {
-                return res.status(200).json({hash: hash, status: 'done'})
+              if (hashes[0].hash === hash) {
+                res.status(200).send('done')
               } else {
-                res.status(406).json({
-                  err: 'hash mismatch',
-                  expected: req.params.hash,
-                  actual: hashes[0].hash
-                })
+                console.log('hash mismatch', hash, hashes[0].hash)
+                res.status(406).send('hash mismatch ' + hash + ' ' + hashes[0].hash)
               }
             } else {
-              return res.status(400).send('couldn\'t produce ipfs hash')
+              res.status(400).send('couldn\'t produce ipfs hash')
             }
           })
+        })
+      } else {
+        streams[req.body.resumableFilename].write(req.files.file.data, () => {
+          // if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
+          // } else {
+          // }
 
-          delete streams[req.body.resumableFilename]
+          return res.status(200).send('ok')
         })
       }
-
-      streams[req.body.resumableFilename].write(req.files.file.data, () => {
-        if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
-          streams[req.body.resumableFilename].end()
-          console.log('ending stream')
-        }
-
-        return res.status(200).send('ok')
-      })
     }
     // req.body:  { resumableChunkNumber: '29',
     //   resumableChunkSize: '1048576',
