@@ -84,39 +84,44 @@ module.exports = (node) => {
     if (req.body && req.body.resumableFilename) {
       if (!streams[req.body.resumableFilename]) {
         streams[req.body.resumableFilename] = fs.createWriteStream(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+
+        streams[req.body.resumableFilename].on('error', (err) => {
+          if (err) {
+            console.error('stream error : ', err)
+            return res.status(500).send(err)
+          }
+        })
+
+        streams[req.body.resumableFilename].once('end', () => {
+          node.ipfs.upload([path.join(os.tmpdir(), 'paratii-ipfs-' + hash)], (err, hashes) => {
+            if (err) {
+              return res.status(500).send(err)
+            }
+            console.log('hashes: ', hashes)
+            if (hashes && hashes[0]) {
+              if (hashes[0].hash === req.params.hash) {
+                return res.status(200).json({hash: hash, status: 'done'})
+              } else {
+                res.status(406).json({
+                  err: 'hash mismatch',
+                  expected: req.params.hash,
+                  actual: hashes[0].hash
+                })
+              }
+            } else {
+              return res.status(400).send('couldn\'t produce ipfs hash')
+            }
+          })
+
+          delete streams[req.body.resumableFilename]
+        })
       }
 
       streams[req.body.resumableFilename].write(req.files.file.data)
       setTimeout(() => {
         if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
-          streams[req.body.resumableFilename].once('end', () => {
-            node.ipfs.upload([path.join(os.tmpdir(), 'paratii-ipfs-' + hash)], (err, hashes) => {
-              if (err) {
-                return res.status(500).send(err)
-              }
-              console.log('hashes: ', hashes)
-              if (hashes && hashes[0]) {
-                if (hashes[0].hash === req.params.hash) {
-                  return res.status(200).json({hash: hash, status: 'done'})
-                } else {
-                  res.status(406).json({
-                    err: 'hash mismatch',
-                    expected: req.params.hash,
-                    actual: hashes[0].hash
-                  })
-                }
-              } else {
-                return res.status(400).send('couldn\'t produce ipfs hash')
-              }
-            })
-
-            delete streams[req.body.resumableFilename]
-          })
-
-          setTimeout(() => {
-            streams[req.body.resumableFilename].end()
-            console.log('ending stream')
-          }, 1)
+          streams[req.body.resumableFilename].end()
+          console.log('ending stream')
         } else {
           return res.send('ok')
         }
