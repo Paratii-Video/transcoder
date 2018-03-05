@@ -41,9 +41,13 @@ class Pipeline extends EventEmitter {
     this._jobs = {}
     this._lastUpdate = {}
     this._uploaderProgress = {}
+    this._progressLastUpdate = {}
 
     this.pipfs.on('progress', (hash, chunkSize) => {
-      if (this._jobs[hash] && this._jobs[hash].peerId && this._uploaderProgress !== 100) {
+      if (this._jobs[hash] && this._jobs[hash].peerId &&
+        this._uploaderProgress !== 100 &&
+        ((new Date() - this._progressLastUpdate[hash]) / 1000 > 10)
+      ) {
         // TODO calculate percent. send it to the client. store it here if
         // client isn't available
         this._uploaderProgress[hash] = this._uploaderProgress[hash] || 0
@@ -59,6 +63,7 @@ class Pipeline extends EventEmitter {
             percent: (this._uploaderProgress[hash] / this._jobs[hash].size) * 100
           })
         try {
+          this._progressLastUpdate[hash] = new Date()
           this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
             if (err) return console.log('err: ', err)
             console.log('paratii protocol msg sent: ', hash)
@@ -196,7 +201,7 @@ class Pipeline extends EventEmitter {
 
     // paratii-protocol signal to client the progress of a job.
     this._jobs[job.hash].on('progress', (hash, size, percent) => {
-      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 3)) {
+      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 2)) {
         let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:progress',
           { hash: hash,
             author: this._jobs[job.hash].peerId.id,
