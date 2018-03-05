@@ -9,6 +9,7 @@ const router = express.Router()
 
 module.exports = (node) => {
   let streams = {}
+  let ipfsStream = null
 
   router.get('/', (req, res, next) => {
     res.json({test: 1})
@@ -80,53 +81,75 @@ module.exports = (node) => {
   router.post('/transcode/:hash', (req, res, next) => {
     let hash = req.params.hash
     console.log('req.body: ', req.body)
-    console.log('req.files: ', req.files)
+    console.log('hash to reproduce: ', hash)
+    // console.log('req.files: ', req.files)
     if (req.body && req.body.resumableFilename) {
-      if (!streams[req.body.resumableFilename]) {
-        streams[req.body.resumableFilename] = fs.createWriteStream(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
-
-        streams[req.body.resumableFilename].on('error', (err) => {
-          if (err) {
-            console.error('stream error : ', err)
-            return res.status(500).send(err)
-          }
-        })
-
-        streams[req.body.resumableFilename].once('close', () => {
-          delete streams[req.body.resumableFilename]
-        })
+      if (!ipfsStream) {
+        ipfsStream = node.ipfs.ipfs.files.addReadableStream()
       }
+      ipfsStream.on('data', (file) => {
+        console.log('ipfsStream: ', file)
+      })
 
-      if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
-        streams[req.body.resumableFilename].end(req.files.file.data, () => {
-          console.log('ending stream')
-          console.log(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
-          node.ipfs.upload([path.join(os.tmpdir(), 'paratii-ipfs-' + hash)], (err, hashes) => {
-            if (err) {
-              return res.status(500).send(err)
-            }
-            console.log('hashes: ', hashes)
-            if (hashes && hashes[0]) {
-              if (hashes[0].hash === hash) {
-                res.status(200).send('done')
-              } else {
-                console.log('hash mismatch', hash, hashes[0].hash)
-                res.status(406).send('hash mismatch ' + hash + ' ' + hashes[0].hash)
-              }
-            } else {
-              res.status(400).send('couldn\'t produce ipfs hash')
-            }
-          })
-        })
-      } else {
-        streams[req.body.resumableFilename].write(req.files.file.data, () => {
-          // if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
-          // } else {
-          // }
+      ipfsStream.write({
+        path: req.body.resumableChunkNumber + req.body.resumableFilename,
+        content: req.files.file.data
+      })
 
-          return res.status(200).send('ok')
-        })
-      }
+      setTimeout(() => {
+        try {
+          res.status(200).send('ok')
+        } catch (e) {
+          console.log('express err: ', e.msg)
+        }
+      }, 1)
+      // -----------------------------------------------------------------------
+      // if (!streams[req.body.resumableFilename]) {
+      //   streams[req.body.resumableFilename] = fs.createWriteStream(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+      //
+      //   streams[req.body.resumableFilename].on('error', (err) => {
+      //     if (err) {
+      //       console.error('stream error : ', err)
+      //       return res.status(500).send(err)
+      //     }
+      //   })
+      //
+      //   streams[req.body.resumableFilename].once('close', () => {
+      //     delete streams[req.body.resumableFilename]
+      //   })
+      // }
+      //
+      // if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
+      //   streams[req.body.resumableFilename].end(req.files.file.data, () => {
+      //     console.log('ending stream')
+      //     console.log(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+      //     node.ipfs.upload([path.join(os.tmpdir(), 'paratii-ipfs-' + hash)], (err, hashes) => {
+      //       if (err) {
+      //         return res.status(500).send(err)
+      //       }
+      //       console.log('hashes: ', hashes)
+      //       if (hashes && hashes[0]) {
+      //         if (hashes[0].hash === hash) {
+      //           res.status(200).send('done')
+      //         } else {
+      //           console.log('hash mismatch', hash, hashes[0].hash)
+      //           res.status(406).send('hash mismatch ' + hash + ' ' + hashes[0].hash)
+      //         }
+      //       } else {
+      //         res.status(400).send('couldn\'t produce ipfs hash')
+      //       }
+      //     })
+      //   })
+      // } else {
+      //   streams[req.body.resumableFilename].write(req.files.file.data, () => {
+      //     // if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
+      //     // } else {
+      //     // }
+      //
+      //     return res.status(200).send('ok')
+      //   })
+      // }
+      // -----------------------------------------------------------------------
     }
     // req.body:  { resumableChunkNumber: '29',
     //   resumableChunkSize: '1048576',
