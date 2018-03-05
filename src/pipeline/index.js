@@ -43,7 +43,7 @@ class Pipeline extends EventEmitter {
     this._uploaderProgress = {}
 
     this.pipfs.on('progress', (hash, chunkSize) => {
-      if (this._jobs[hash] && this._jobs[hash].peerId) {
+      if (this._jobs[hash] && this._jobs[hash].peerId && this._uploaderProgress !== 100) {
         // TODO calculate percent. send it to the client. store it here if
         // client isn't available
         this._uploaderProgress[hash] = this._uploaderProgress[hash] || 0
@@ -70,7 +70,32 @@ class Pipeline extends EventEmitter {
     })
 
     this.pipfs.on('done', (hash) => {
-      this._uploaderProgress[hash] = 0
+      if (this._jobs[hash] && this._jobs[hash].peerId) {
+        // TODO calculate percent. send it to the client. store it here if
+        // client isn't available
+        this._uploaderProgress[hash] = this._uploaderProgress[hash] || 0
+        if (this._uploaderProgress[hash] > 100) {
+          // catching this one in case pipfs done event isn't sufficient.
+          this._uploaderProgress[hash] = 0
+        }
+
+        let msg = this._jobs[hash].pipfs.protocol.createCommand('uploader:progress',
+          { hash: hash,
+            author: this._jobs[hash].peerId.id,
+            chunkSize: 0,
+            percent: 100
+          })
+        try {
+          this._jobs[hash].pipfs.protocol.network.sendMessage(this._jobs[hash].peerId, msg, (err) => {
+            if (err) return console.log('err: ', err)
+            console.log('paratii protocol msg sent: ', hash)
+          })
+        } catch (e) {
+          console.error('Libp2p ERROR: ', e)
+        }
+      }
+
+      this._uploaderProgress[hash] = 100
     })
   }
 
@@ -171,7 +196,7 @@ class Pipeline extends EventEmitter {
 
     // paratii-protocol signal to client the progress of a job.
     this._jobs[job.hash].on('progress', (hash, size, percent) => {
-      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 15)) {
+      if (this._jobs[job.hash].peerId && ((new Date() - this._lastUpdate[job.hash]) / 1000 > 3)) {
         let msg = this._jobs[job.hash].pipfs.protocol.createCommand('transcoding:progress',
           { hash: hash,
             author: this._jobs[job.hash].peerId.id,
