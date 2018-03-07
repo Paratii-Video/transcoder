@@ -185,7 +185,7 @@ class Job extends EventEmitter {
     fs.mkdir(this.rootPath, (err) => {
       if (err) return cb(this._handleError(err))
 
-      this.command = ffmpeg('/tmp/paratii-ipfs-' + this.hash)
+      this.command = ffmpeg('/tmp/paratii-ipfs-' + this.hash, {niceness: 2})
         // .inputOptions('-strict -2')
         .addOption('-preset', 'veryfast')
         .addOption('-framerate', 30)

@@ -65,7 +65,7 @@ class PublisherNode extends EventEmitter {
         }
       },
       api: {
-        port: 3000
+        port: 6565
       },
       pipeline: {}
     }
