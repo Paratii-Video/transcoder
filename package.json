@@ -11,6 +11,7 @@
   "author": "Yahya - Paratii.video <ya7yaz@gmail.com>",
   "license": "GPL-3.0",
   "dependencies": {
+    "@livepeer/sdk": "^1.0.0-alpha.3",
     "async": "^2.5.0",
     "compression": "^1.7.1",
     "default-options": "^1.0.0",
@@ -19,6 +20,7 @@
     "ffmpeg-stream": "^0.5.0",
     "fluent-ffmpeg": "^2.1.2",
     "glob": "^7.1.2",
+    "hls-parser": "^0.1.6",
     "ipfs": "github:Paratii-Video/js-ipfs#paratii/v0.28.2",
     "ipfs-api": "^14.3.5",
     "level-sublevel": "^6.6.1",
