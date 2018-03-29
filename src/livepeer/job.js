@@ -15,6 +15,8 @@ const HLS = require('hls-parser')
 const tutils = require('../ffmpeg/utils')
 const db = require('../db')
 
+const noop = function () {}
+
 const config = {
   FFMPEG_PATH: process.env.FFMPEG_PATH || '/usr/bin/ffmpeg',
   FFPROBE_PATH: process.env.FFPROBE_PATH || '/usr/bin/ffprobe',
@@ -49,7 +51,7 @@ class Job extends EventEmitter {
     this.meta = {}
 
     this.retries = 0
-    this._maxRetries = 3
+    this._maxRetries = 60
 
     // livepeer stitching.
     // -----------------------
@@ -60,8 +62,9 @@ class Job extends EventEmitter {
       hls: null
     }
 
-    // holds [playlist_res] = playlist segments.
+    // holds [playlist_uri] = playlist object.
     this._stitch.playlists = {}
+    this._stitch.done = {}
 
     // add the Id to the db
     db.addId(this.id, this.hash)
@@ -90,8 +93,52 @@ class Job extends EventEmitter {
       if (err) {
         return cb(err)
       }
+      if (body.toString() === 'ErrNotFound' || body.toString() === 'ErrNotFound\n') {
+        setTimeout(() => {
+          this._getManifestID(cb)
+        }, 1000)
+      } else {
+        cb(null, body)
+      }
+    })
+  }
 
-      cb(null, body)
+  _concatHLSPlaylist (uri, playlist, cb) {
+    if (this._stitch.playlists[uri]) {
+      let oldPlaylist = this._stitch.playlists[uri]
+      // TODO
+      if (playlist.isMasterPlaylist) {
+        let oldVariantsKeys = oldPlaylist.variants.map((variant) => {
+          return variant.uri
+        })
+        playlist.variants.forEach((variant) => {
+          if (oldVariantsKeys.indexOf(variant.uri) === -1) {
+            oldPlaylist.variants.push(variant)
+          } else {
+            // variant is already there. move on.
+          }
+        })
+      } else {
+        let oldSegmentsKeys = oldPlaylist.segments.map((segment) => {
+          return segment.uri
+        })
+        playlist.segments.forEach((segment) => {
+          if (oldSegmentsKeys.indexOf(segment.uri) === -1) {
+            oldPlaylist.segments.push(segment)
+          } else {
+            // segment is already there. move on.
+          }
+        })
+      }
+
+      this._stitch.playlists[uri] = oldPlaylist
+    } else {
+      this._stitch.playlists[uri] = playlist
+    }
+
+    fs.writeFile(this.rootPath + `/${uri}`, HLS.stringify(this._stitch.playlists[uri]), (err) => {
+      if (err) return cb(err)
+      return cb(null, this._stitch.playlists[uri])
     })
   }
 
@@ -112,11 +159,13 @@ class Job extends EventEmitter {
       if (res && res.statusCode === 200) {
         try {
           let playlist = HLS.parse(body)
+          // TODO concat these new? segments.
           console.log('saving HLS Playlist to ', this.rootPath)
-          fs.writeFile(this.rootPath + `/${manifestID}.m3u8`, body, (err) => {
-            if (err) return cb(err)
-            return cb(null, playlist)
-          })
+          this._concatHLSPlaylist(`${manifestID}.m3u8`, playlist, cb)
+          // fs.writeFile(this.rootPath + `/${manifestID}.m3u8`, body, (err) => {
+          //   if (err) return cb(err)
+          //   return cb(null, playlist)
+          // })
         } catch (e) {
           return cb(e)
         }
@@ -136,6 +185,12 @@ class Job extends EventEmitter {
    * @param  {string} uri the ts url.
    */
   _grabAnsStoreSegment (uri, cb) {
+    cb = cb || noop
+    if (this._stitch.done[uri]) {
+      console.log('uri: ', uri, ' already grabbed')
+      return cb(null, '')
+    }
+
     request({
       uri: `http://localhost:8935/stream/${uri}`,
       method: 'GET'
@@ -145,8 +200,12 @@ class Job extends EventEmitter {
       }
       if (res && res.statusCode === 200) {
         console.log('saving segment ', uri, ' to ', this.rootPath)
+        this._stitch.done[uri] = true
         fs.writeFile(this.rootPath + `/${uri}`, body, (err) => {
           if (err) return cb(err)
+          setImmediate(() => {
+            this._grabPreviousSegment(uri)
+          })
           return cb(null, body)
         })
       } else {
@@ -155,9 +214,35 @@ class Job extends EventEmitter {
           this.stopPlaylistPolling()
         }
         // console.log('_grabAnsStoreSegment ERR: ', res)
-        cb(new Error('_grabAnsStoreSegment, wrong statusCode ' + body))
+        cb(new Error('_grabAnsStoreSegment, wrong statusCode ' + body + ' ' + uri))
       }
     })
+  }
+
+  _grabPreviousSegment (uri) {
+    // get current nonce.
+    let nonceInt, nonceLength
+    let nonce = uri.match(/_\d+\.ts/)
+    if (nonce && nonce.length > 0) {
+      nonceLength = nonce[0].length
+      nonce = nonce[0].slice(1, -3) // convert _0123.ts to 0123
+      try {
+        nonceInt = parseInt(nonce)
+      } catch (e) {
+        console.log('err _grabPreviousSegment: couldn\'t parse ', nonce)
+      }
+
+      if (nonceInt === 0) {
+        // cant get previous slice to that.
+      } else if (nonceInt > 0) {
+        let uriBase = uri.slice(0, uri.length - nonceLength)
+        let previousUri = uriBase + '_' + String(nonceInt - 1) + '.ts'
+        console.log('previousUri: ', previousUri)
+        if (!this._stitch.done[previousUri]) {
+          this._grabAnsStoreSegment(previousUri)
+        }
+      }
+    }
   }
 
   /**
@@ -438,7 +523,7 @@ class Job extends EventEmitter {
           })
         }
       })
-    }, 1000)
+    }, 500)
   }
 
   stopPlaylistPolling () {
@@ -491,6 +576,7 @@ class Job extends EventEmitter {
 
   grabMaster () {
     if (this.retries < this._maxRetries) {
+      this.retries++
       this._getManifestID((err, id) => {
         if (err) return this.emit('error', err, this.hash)
         this._livepeerManifestId = id
@@ -520,7 +606,7 @@ class Job extends EventEmitter {
           // get manifestID
           setTimeout(() => {
             this.grabMaster()
-          }, 5000)
+          }, 3000)
 
           // this.on('manifestID', (hash, manifestID) => {
           //   this._getHLSPlaylist(manifestID, (err, playlist) => {
