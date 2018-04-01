@@ -211,7 +211,10 @@ class Job extends EventEmitter {
       } else {
         if (body.toString() === 'ErrNotFound' || body.toString() === 'ErrNotFound\n') {
           console.log('ERRNOTFOUND! ', uri)
-          this.stopPlaylistPolling()
+          this._grabNextSegment(uri)
+          setTimeout(() => {
+            this.stopPlaylistPolling()
+          }, 1000)
         }
         // console.log('_grabAnsStoreSegment ERR: ', res)
         cb(new Error('_grabAnsStoreSegment, wrong statusCode ' + body + ' ' + uri))
@@ -240,6 +243,37 @@ class Job extends EventEmitter {
         console.log('previousUri: ', previousUri)
         if (!this._stitch.done[previousUri]) {
           this._grabAnsStoreSegment(previousUri)
+        }
+      }
+    }
+  }
+
+  /**
+   * get the supposed next segment
+   * @param  {string} uri livepeer ts segment
+   */
+  _grabNextSegment (uri) {
+    if (this._alreadyCalledNextSegment) {
+      // call this once.
+    } else {
+      this._alreadyCalledNextSegment = true
+      // get current nonce.
+      let nonceInt, nonceLength
+      let nonce = uri.match(/_\d+\.ts/)
+      if (nonce && nonce.length > 0) {
+        nonceLength = nonce[0].length
+        nonce = nonce[0].slice(1, -3) // convert _0123.ts to 0123
+        try {
+          nonceInt = parseInt(nonce)
+        } catch (e) {
+          console.log('err _grabPreviousSegment: couldn\'t parse ', nonce)
+        }
+
+        let uriBase = uri.slice(0, uri.length - nonceLength)
+        let nextUri = uriBase + '_' + String(nonceInt + 1) + '.ts'
+        console.log('nextUri: ', nextUri)
+        if (!this._stitch.done[nextUri]) {
+          this._grabAnsStoreSegment(nextUri)
         }
       }
     }
