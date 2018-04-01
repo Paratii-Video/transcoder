@@ -136,10 +136,23 @@ class Job extends EventEmitter {
       this._stitch.playlists[uri] = playlist
     }
 
-    fs.writeFile(this.rootPath + `/${uri}`, HLS.stringify(this._stitch.playlists[uri]), (err) => {
-      if (err) return cb(err)
-      return cb(null, this._stitch.playlists[uri])
-    })
+    // fs.writeFile(this.rootPath + `/${uri}`, HLS.stringify(this._stitch.playlists[uri]), (err) => {
+    //   if (err) return cb(err)
+    //   return cb(null, this._stitch.playlists[uri])
+    // })
+
+    // for paratii compatiblity, make sure master playlist is named master.m3u8
+    if (playlist.isMasterPlaylist) {
+      fs.writeFile(this.rootPath + `/master.m3u8`, HLS.stringify(this._stitch.playlists[uri]), (err) => {
+        if (err) return cb(err)
+        return cb(null, this._stitch.playlists[uri])
+      })
+    } else {
+      fs.writeFile(this.rootPath + `/${uri}`, HLS.stringify(this._stitch.playlists[uri]), (err) => {
+        if (err) return cb(err)
+        return cb(null, this._stitch.playlists[uri])
+      })
+    }
   }
 
   /**
@@ -173,9 +186,11 @@ class Job extends EventEmitter {
         if (body.toString() === 'ErrNotFound' || body.toString() === 'ErrNotFound\n') {
           console.log('ERRNOTFOUND!  manifestID: ', manifestID)
           this.stopPlaylistPolling()
+          cb(null, '')
+        } else {
+          // console.log('_getHLSPlaylist ', manifestID, ' :', res)
+          cb(new Error('wrong statusCode ' + body))
         }
-        // console.log('_getHLSPlaylist ', manifestID, ' :', res)
-        cb(new Error('wrong statusCode ' + body))
       }
     })
   }
@@ -190,36 +205,67 @@ class Job extends EventEmitter {
       console.log('uri: ', uri, ' already grabbed')
       return cb(null, '')
     }
-
-    request({
-      uri: `http://localhost:8935/stream/${uri}`,
-      method: 'GET'
-    }, (err, res, body) => {
-      if (err) {
-        return cb(err)
-      }
+    request(`http://localhost:8935/stream/${uri}`)
+    .pipe(fs.createWriteStream(this.rootPath + `/${uri}`))
+    .on('response', (res) => {
       if (res && res.statusCode === 200) {
         console.log('saving segment ', uri, ' to ', this.rootPath)
         this._stitch.done[uri] = true
-        fs.writeFile(this.rootPath + `/${uri}`, body, (err) => {
-          if (err) return cb(err)
-          setImmediate(() => {
-            this._grabPreviousSegment(uri)
-          })
-          return cb(null, body)
+        setImmediate(() => {
+          this._grabPreviousSegment(uri)
         })
+        return cb(null, res.body)
       } else {
-        if (body.toString() === 'ErrNotFound' || body.toString() === 'ErrNotFound\n') {
+        if (res.body.toString() === 'ErrNotFound' || res.body.toString() === 'ErrNotFound\n') {
           console.log('ERRNOTFOUND! ', uri)
           this._grabNextSegment(uri)
           setTimeout(() => {
             this.stopPlaylistPolling()
           }, 1000)
+
+          cb(null, '')
+        } else {
+          // console.log('_grabAnsStoreSegment ERR: ', res)
+          cb(new Error('_grabAnsStoreSegment, wrong statusCode ' + res.body + ' ' + uri))
         }
-        // console.log('_grabAnsStoreSegment ERR: ', res)
-        cb(new Error('_grabAnsStoreSegment, wrong statusCode ' + body + ' ' + uri))
       }
     })
+    .on('error', (err) => {
+      cb(err)
+    })
+
+    // request({
+    //   uri: `http://localhost:8935/stream/${uri}`,
+    //   method: 'GET'
+    // }, (err, res, body) => {
+    //   if (err) {
+    //     return cb(err)
+    //   }
+    //   if (res && res.statusCode === 200) {
+    //     console.log('saving segment ', uri, ' to ', this.rootPath)
+    //     this._stitch.done[uri] = true
+    //     fs.writeFile(this.rootPath + `/${uri}`, body, (err) => {
+    //       if (err) return cb(err)
+    //       setImmediate(() => {
+    //         this._grabPreviousSegment(uri)
+    //       })
+    //       return cb(null, body)
+    //     })
+    //   } else {
+    //     if (body.toString() === 'ErrNotFound' || body.toString() === 'ErrNotFound\n') {
+    //       console.log('ERRNOTFOUND! ', uri)
+    //       this._grabNextSegment(uri)
+    //       setTimeout(() => {
+    //         this.stopPlaylistPolling()
+    //       }, 1000)
+    //
+    //       cb(null, '')
+    //     } else {
+    //       // console.log('_grabAnsStoreSegment ERR: ', res)
+    //       cb(new Error('_grabAnsStoreSegment, wrong statusCode ' + body + ' ' + uri))
+    //     }
+    //   }
+    // })
   }
 
   _grabPreviousSegment (uri) {
@@ -575,35 +621,27 @@ class Job extends EventEmitter {
     this.result.duration = this.codecData.duration || this.duration
     console.log('result after mapLimit ', this.result)
 
-    this.generateManifest((err, masterPlaylist) => {
+    console.log('generating screenshots from ', this.result.root + '/master.m3u8', '\t', this.rootPath)
+    // this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
+    this.generateScreenshots(path.join(os.tmpdir(), 'paratii-ipfs-' + this.hash), this.rootPath, (err, screenshots) => {
       if (err) return cb(this._handleError(err))
-      console.log('masterPlaylist: ', masterPlaylist)
+      this.result.screenshots = screenshots
+      console.log('rootPath: ', this.rootPath)
 
-      fs.writeFile(this.result.root + '/master.m3u8', masterPlaylist, (err, done) => {
+      this.pipfs.addDirToIPFS(this.rootPath, (err, resp) => {
         if (err) return cb(this._handleError(err))
-        console.log('generating screenshots from ', this.result.root + '/master.m3u8', '\t', this.rootPath)
-        // this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
-        this.generateScreenshots(path.join(os.tmpdir(), 'paratii-ipfs-' + this.hash), this.rootPath, (err, screenshots) => {
-          if (err) return cb(this._handleError(err))
-          this.result.screenshots = screenshots
-          console.log('rootPath: ', this.rootPath)
+        console.log('Master Playlist is added to IPFS ', resp)
+        this.result.master = resp
 
-          this.pipfs.addDirToIPFS(this.rootPath, (err, resp) => {
-            if (err) return cb(this._handleError(err))
-            console.log('Master Playlist is added to IPFS ', resp)
-            this.result.master = resp
-
-            // update the DB ---------------------
-            db.addTranscodedHash(this.id, this.result.master.hash)
-            db.updateHashIndex(this.hash, this.result.master.hash)
-            db.updateInfo(this.id, {result: this.result, meta: this.meta})
-            db.updateInfo(this.hash, {result: this.result, meta: this.meta})
-            // -----------------------------------
-            setTimeout(() => {
-              cb(null, this.result)
-            }, 100)
-          })
-        })
+        // update the DB ---------------------
+        db.addTranscodedHash(this.id, this.result.master.hash)
+        db.updateHashIndex(this.hash, this.result.master.hash)
+        db.updateInfo(this.id, {result: this.result, meta: this.meta})
+        db.updateInfo(this.hash, {result: this.result, meta: this.meta})
+        // -----------------------------------
+        setTimeout(() => {
+          cb(null, this.result)
+        }, 100)
       })
     })
   }
@@ -640,7 +678,7 @@ class Job extends EventEmitter {
           // get manifestID
           setTimeout(() => {
             this.grabMaster()
-          }, 3000)
+          }, 4000)
 
           // this.on('manifestID', (hash, manifestID) => {
           //   this._getHLSPlaylist(manifestID, (err, playlist) => {
@@ -706,6 +744,16 @@ class Job extends EventEmitter {
             if (err) return this.emit('error', err, this.hash)
             setTimeout(() => {
               this.stopPlaylistPolling()
+
+              // finalize the hls folder
+              // 1. add screenshots.
+              // 2. make sure hls masterplaylist is correct and has all the segments.
+              // 3. add to IPFS.
+              // all good.
+              this._onStreamDone((err, result) => {
+                if (err) return this.emit('error', this.hash, err)
+                cb(null, result)
+              })
             }, 5000)
             // stream done.
           })
