@@ -134,8 +134,8 @@ class Pipeline extends EventEmitter {
     //   return callback(null, 1)
     // }, 2000)
     // -------------------------------------------------------------------------
-    // this._jobs[job.hash] = new Job(job)
-    this._jobs[job.hash] = new LivepeerJob(job)
+    this._jobs[job.hash] = new Job(job)
+    // this._jobs[job.hash] = new LivepeerJob(job)
 
     // paratii-protocol signal to client that job started.
     if (this._jobs[job.hash].peerId) {
