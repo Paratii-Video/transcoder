@@ -44,6 +44,18 @@ module.exports = (node) => {
     </html>`)
   })
 
+  router.get('/debug/:hash', (req, res, next) => {
+    node.pipeline.push({
+      peerId: node.ipfs.peerId,
+      priority: 1,
+      pipfs: node.ipfs,
+      hash: req.params.hash,
+      size: 1
+    })
+
+    res.status(200).send('check logs')
+  })
+
   // router.post('/transcode/:hash', (req, res, next) => {
   //   // res.json({Message: 'Not implemented yet', code: 0})
   //   let hash = req.params.hash

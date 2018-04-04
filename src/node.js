@@ -24,7 +24,14 @@ class PublisherNode extends EventEmitter {
         EXPERIMENTAL: { // enable experimental features
           pubsub: false,
           sharding: true, // enable dir sharding
-          dht: false // enable KadDHT, currently not interopable with go-ipfs
+          dht: false, // enable KadDHT, currently not interopable with go-ipfs
+          // dht: true, // enable KadDHT, currently not interopable with go-ipfs
+          relay: {
+            enabled: true, // enable circuit relay dialer and listener
+            hop: {
+              enabled: true // enable circuit relay HOP (make this node a relay)
+            }
+          }
         },
         bitswap: {
           maxMessageSize: 256 * 1024
