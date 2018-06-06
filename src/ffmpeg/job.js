@@ -164,6 +164,10 @@ class Job extends EventEmitter {
   _handleError (e) {
     // TODO: handle errors properly like a gentleman.
     console.error('_handleError: ', e)
+    if (typeof e === 'object') {
+      return JSON.stringify(e)
+    }
+
     return e
   }
 
