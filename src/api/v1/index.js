@@ -119,33 +119,99 @@ module.exports = (node) => {
     let size = req.query.size
     let hash = crypto.createHash('sha256').digest(imgUrl)
     console.log(imgUrl, size, hash.toString('hex'))
+    let originalImgPath = path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + path.extname(imgUrl))
+    let outputFilename = path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + '_' + size + path.extname(imgUrl))
 
-    let stream = fs.createWriteStream(path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + path.extname(imgUrl)))
-    let outputFilename = path.join(os.tmpdir(), 'resized-img-js-' + hash.toString('hex') + path.extname(imgUrl))
+    fs.readFile(outputFilename, (err, file) => {
+      if (err) {
+        // file doesn't exist.
+        fs.readFile(originalImgPath, (err, file) => {
+          if (err) {
+            // download original
+            let stream = fs.createWriteStream(originalImgPath)
 
-    request.get(imgUrl)
+            request.get(imgUrl)
+              .on('error', (err) => {
+                res.sendStatus(500).send(err)
+              })
+              .on('end', () => {
+                console.log('stream ended!', stream.path)
+                resizeImg(stream.path, size, outputFilename, (err, filename) => {
+                  if (err) {
+                    res.sendStatus(500).send(err)
+                  } else {
+                    let f = fs.createReadStream(outputFilename)
+                    pump(f, res, (err) => {
+                      if (err) console.log('err: ', err)
+                    })
+                  }
+                })
+              })
+              .pipe(stream)
+          } else {
+            // resize img
+            resizeImg(originalImgPath, size, outputFilename, (err, filename) => {
+              if (err) {
+                res.sendStatus(500).send(err)
+              } else {
+                let f = fs.createReadStream(outputFilename)
+                pump(f, res, (err) => {
+                  if (err) console.log('err: ', err)
+                })
+              }
+            })
+          }
+        })
+      } else {
+        // resized version exist. send it.
+        let f = fs.createReadStream(outputFilename)
+        pump(f, res, (err) => {
+          if (err) console.log('err: ', err)
+        })
+      }
+    })
+    // let stream = fs.createWriteStream(originalImgPath)
+    //
+    // request.get(imgUrl)
+    //   .on('error', (err) => {
+    //     res.sendStatus(500).send(err)
+    //   })
+    //   .on('end', () => {
+    //     console.log('stream ended!', stream.path)
+    //
+    //     ffmpeg(stream.path)
+    //       .addOption(`-vf scale=${size}`)
+    //       .on('end', () => {
+    //         console.log(stream.path, ':', size, '\t DONE')
+    //         // res.send(200)
+    //         // res.send()
+    //         let f = fs.createReadStream(outputFilename)
+    //         pump(f, res, (err) => {
+    //           if (err) console.log('err: ', err)
+    //         })
+    //       })
+    //       .save(path.join(os.tmpdir(), 'resized-img-js-' + hash.toString('hex') + path.extname(imgUrl)))
+    //       .run()
+    //   })
+    //   .pipe(stream)
+  })
+
+  function resizeImg (img, size, outputFilename, cb) {
+    cb = once(cb)
+    ffmpeg(img)
+      .addOption(`-vf scale=${size}`)
       .on('error', (err) => {
-        res.sendStatus(500).send(err)
+        return cb(err)
       })
       .on('end', () => {
-        console.log('stream ended!', stream.path)
-
-        ffmpeg(stream.path)
-          .addOption(`-vf scale=${size}`)
-          .on('end', () => {
-            console.log(stream.path, ':', size, '\t DONE')
-            // res.send(200)
-            // res.send()
-            let f = fs.createReadStream(outputFilename)
-            pump(f, res, (err) => {
-              if (err) console.log('err: ', err)
-            })
-          })
-          .save(path.join(os.tmpdir(), 'resized-img-js-' + hash.toString('hex') + path.extname(imgUrl)))
-          .run()
+        console.log(img, ':', size, '\t DONE')
+        // res.send(200)
+        // res.send()
+        return cb(null, outputFilename)
       })
-      .pipe(stream)
-  })
+      .save(outputFilename)
+      .run()
+  }
 
   node.api.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
