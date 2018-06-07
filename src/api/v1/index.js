@@ -117,7 +117,8 @@ module.exports = (node) => {
   router.get('/thumbnail/resize', (req, res, next) => {
     let imgUrl = req.query.url
     let size = req.query.size
-    let hash = crypto.createHash('sha256').digest(imgUrl)
+    let hash = crypto.createHash('sha256').update(imgUrl).digest()
+
     console.log(imgUrl, size, hash.toString('hex'))
     let originalImgPath = path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + path.extname(imgUrl))
     let outputFilename = path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + '_' + size + path.extname(imgUrl))
