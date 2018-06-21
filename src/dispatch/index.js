@@ -52,6 +52,13 @@ class Dispatch extends EventEmitter {
       })
 
       socket.on('transcode', (data) => {
+        this._node.pipeline.push({
+          peerId: socket.id,
+          priority: 1,
+          pipfs: this._node.ipfs,
+          hash: data.hash,
+          size: data.size
+        })
         console.log('got transcode', data)
         socket.emit('statusUpdate', data)
       })

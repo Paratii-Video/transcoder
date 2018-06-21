@@ -35,7 +35,7 @@ const dataOps = {
     }
     // TODO: add a log to record time of updatestatus
     // TODO: trigger an update event. use sublevel built-in events ??? maybe.
-    db.status.put(originHash, val, callback)
+    db.status.set(originHash, val, callback)
   },
 
   /**
@@ -57,11 +57,11 @@ const dataOps = {
     db.progress.get(originHash, (err, _str) => {
       if (err) {
         // no progress for this origin hash just yet.
-        db.progress.put(originHash, JSON.stringify(json), cb)
+        db.progress.set(originHash, JSON.stringify(json), cb)
       } else {
         let obj = JSON.parse(_str)
         let newObj = Object.assign({}, obj, json)
-        db.progress.put(originHash, JSON.stringify(newObj), cb)
+        db.progress.set(originHash, JSON.stringify(newObj), cb)
       }
     })
   },
@@ -98,7 +98,7 @@ const dataOps = {
    */
   updateInfo: (hash, info, callback) => {
     // TODO define a schema for the info
-    db.info.put(hash, JSON.stringify(info), callback)
+    db.info.set(hash, JSON.stringify(info), callback)
   },
 
   // -----------------------[origin & transcoded conversions]-------------------
@@ -161,10 +161,10 @@ const dataOps = {
 
     parallel([
       (cb) => {
-        db.origin2Transcoded.put(origin, transcoded, cb)
+        db.origin2Transcoded.set(origin, transcoded, cb)
       },
       (cb) => {
-        db.transcoded2Origin.put(transcoded, origin, cb)
+        db.transcoded2Origin.set(transcoded, origin, cb)
       }], callback)
   },
 
@@ -200,7 +200,7 @@ const dataOps = {
       return callback(new Error('both id and origin are required to add ID to DB'))
     }
 
-    db.idIndex.put(id, JSON.stringify({origin: origin}), callback)
+    db.idIndex.set(id, JSON.stringify({origin: origin}), callback)
   },
 
   /**
@@ -224,7 +224,7 @@ const dataOps = {
       }
 
       obj.transcoded = hash
-      db.idIndex.put(id, JSON.stringify(obj), callback)
+      db.idIndex.set(id, JSON.stringify(obj), callback)
     })
   },
   // --------------------------[ownership Ops]----------------------------------
@@ -266,7 +266,7 @@ const dataOps = {
 
       vidsArr.push(hash)
 
-      db.owner2Videos.put(address, JSON.stringify(vidsArr), callback)
+      db.owner2Videos.set(address, JSON.stringify(vidsArr), callback)
     })
   }
 }
