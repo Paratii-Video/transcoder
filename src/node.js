@@ -8,6 +8,7 @@ const PIPFS = require('./pipfs')
 const apiRoutes = require('./api/v1')
 const db = require('./db')
 const Pipeline = require('./pipeline')
+const Dispatch = require('./dispatch')
 
 class PublisherNode extends EventEmitter {
   /**
@@ -34,7 +35,7 @@ class PublisherNode extends EventEmitter {
           }
         },
         bitswap: {
-          maxMessageSize: 256 * 1024
+          maxMessageSize: 512 * 1024
         },
         // repo: String(Math.random()),
         config: {
@@ -85,6 +86,12 @@ class PublisherNode extends EventEmitter {
     // hook up the routes
     apiRoutes(this)
 
+    // hook up the socket.io dispatcher.
+    this.dispatch = new Dispatch({
+      node: this,
+      server: this.api.server
+    })
+
     this.api.listen(this._options.api.port)
     // -------------------------------
     // PIPFS & Pipeline.
@@ -113,7 +120,7 @@ class PublisherNode extends EventEmitter {
 
     // catch that transcode command from paratii-protocol
     this.ipfs.on('transcode', (peerId, command) => {
-      console.log('full loop ', command.payload.toString(), '\n', command.args.toString())
+      console.log('full loop ', command.payload.toString(), '\n', command.args.toString(), '\n', peerId)
       let args = JSON.parse(command.args.toString())
 
       // push command to the main transcoder pipeline.
