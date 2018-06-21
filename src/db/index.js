@@ -1,7 +1,8 @@
 'use strict'
 
 const { parallel } = require('async')
-const db = require('./dbs')
+// const db = require('./dbs')
+const db = require('./redis')
 const handleError = (err) => {
   if (err) {
     console.log('unhandled DB ERROR: ', err)
