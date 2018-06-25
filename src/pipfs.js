@@ -152,7 +152,7 @@ class PIPFS extends EventEmitter {
 
   grabFile (hash, cb) {
     let stream = this.ipfs.files.catReadableStream(hash)
-    let fileStream = fs.createWriteStream(path.join(os.tmpdir(), 'paratii-ipfs-' + hash))
+    let fileStream = fs.createWriteStream(path.join(process.env.TMP_DIR, 'paratii-ipfs-' + hash))
     stream.on('error', (err) => {
       console.log('got stream error ', err)
       if (err) return cb(err)

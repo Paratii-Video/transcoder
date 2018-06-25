@@ -37,7 +37,7 @@ class Job extends EventEmitter {
     super()
     this.id = this._generateId()
     // TODO have a choice of a different folder instead of tmp
-    this.rootPath = path.join(os.tmpdir(), 'paratii-' + this.id)
+    this.rootPath = path.join(process.env.TMP_DIR, 'paratii-' + this.id)
     this.peerId = opts.peerId
     this.hash = opts.hash
     this.pipfs = opts.pipfs
@@ -260,7 +260,7 @@ class Job extends EventEmitter {
             if (err) return cb(this._handleError(err))
             console.log('generating screenshots from ', this.result.root + '/master.m3u8', '\t', this.rootPath)
             // this.generateScreenshots(this.result.root + '/master.m3u8', this.rootPath, (err, screenshots) => {
-            this.generateScreenshots(path.join(os.tmpdir(), 'paratii-ipfs-' + this.hash), this.rootPath, (err, screenshots) => {
+            this.generateScreenshots(path.join(process.env.TMP_DIR, 'paratii-ipfs-' + this.hash), this.rootPath, (err, screenshots) => {
               if (err) return cb(this._handleError(err))
               this.result.screenshots = screenshots
               console.log('rootPath: ', this.rootPath)

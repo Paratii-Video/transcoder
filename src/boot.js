@@ -26,6 +26,8 @@ const paratiiStartupWelcome = () => {
 }
 const PublisherNode = require('./node')
 
+process.env.TMP_DIR = process.env.TMP_DIR || '/tmp'
+console.log('/TMP_DIR = ', process.env.TMP_DIR)
 const node = new PublisherNode({})
 node.on('ready', () => {
   paratiiStartupWelcome()

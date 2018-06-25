@@ -71,12 +71,12 @@ module.exports = (node) => {
 
     // console.log('req.files: ', req.files)
 
-    let stream = fs.createWriteStream(path.join(os.tmpdir(), 'res-js-' + hash + '_' + req.body.resumableChunkNumber))
+    let stream = fs.createWriteStream(path.join(process.env.TMP_DIR, 'res-js-' + hash + '_' + req.body.resumableChunkNumber))
 
     stream.end(req.files.file.data, () => {
       if (req.body.resumableChunkNumber === req.body.resumableTotalChunks) {
         // combine file.
-        glob(path.join(os.tmpdir(), 'res-js-' + hash + '_*'), (err, files) => {
+        glob(path.join(process.env.TMP_DIR, 'res-js-' + hash + '_*'), (err, files) => {
           if (err) throw err
           console.log('got a list of files: ', files)
           node.ipfs.upload(files, (err, hashes) => {
@@ -120,8 +120,8 @@ module.exports = (node) => {
     let hash = crypto.createHash('sha256').update(imgUrl).digest()
 
     console.log(imgUrl, size, hash.toString('hex'))
-    let originalImgPath = path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + path.extname(imgUrl))
-    let outputFilename = path.join(os.tmpdir(), 'img-js-' + hash.toString('hex') + '_' + size + path.extname(imgUrl))
+    let originalImgPath = path.join(process.env.TMP_DIR, 'img-js-' + hash.toString('hex') + path.extname(imgUrl))
+    let outputFilename = path.join(process.env.TMP_DIR, 'img-js-' + hash.toString('hex') + '_' + size + path.extname(imgUrl))
 
     fs.readFile(outputFilename, (err, file) => {
       if (err) {
@@ -191,7 +191,7 @@ module.exports = (node) => {
     //           if (err) console.log('err: ', err)
     //         })
     //       })
-    //       .save(path.join(os.tmpdir(), 'resized-img-js-' + hash.toString('hex') + path.extname(imgUrl)))
+    //       .save(path.join(process.env.TMP_DIR, 'resized-img-js-' + hash.toString('hex') + path.extname(imgUrl)))
     //       .run()
     //   })
     //   .pipe(stream)
