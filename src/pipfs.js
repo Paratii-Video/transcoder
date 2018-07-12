@@ -41,7 +41,9 @@ class PIPFS extends EventEmitter {
         )
 
         this.protocol.notifications.on('message:new', (peerId, msg) => {
-          console.log('[paratii-protocol] ', peerId.toB58String(), ' new Msg: ', msg)
+          if (msg && msg.hello && msg.hello.eth) {
+            console.log('[paratii-protocol] ', peerId.toB58String(), ' new Msg from eth:', msg.hello.eth.toString())
+          }
         })
 
         this.protocol.notifications.on('command:transcode', (peerId, command) => {
