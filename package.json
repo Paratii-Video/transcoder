@@ -21,7 +21,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "glob": "^7.1.2",
     "hls-parser": "^0.1.6",
-    "ipfs": "github:Paratii-Video/js-ipfs#2bbfcfe711b382d3933af97a6e35f5f769880f6a",
+    "ipfs": "github:Paratii-Video/js-ipfs#5adc315476877e0236bf163e226087268c8dde9c",
     "ipfs-api": "^14.3.5",
     "level-sublevel": "^6.6.1",
     "leveldown": "^2.0.0",
